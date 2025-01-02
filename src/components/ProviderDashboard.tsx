@@ -20,11 +20,9 @@ interface Review {
   provider_notes: string | null
   approval_status: "Pending" | "Approved" | "Denied"
   created_at: string
-  user: {
-    profiles: {
-      first_name: string | null
-      last_name: string | null
-    }
+  profiles: {
+    first_name: string | null
+    last_name: string | null
   }
 }
 
@@ -40,11 +38,9 @@ const ProviderDashboard = () => {
         .from("provider_reviews")
         .select(`
           *,
-          user:user_id (
-            profiles (
-              first_name,
-              last_name
-            )
+          profiles!provider_reviews_user_id_fkey (
+            first_name,
+            last_name
           )
         `)
         .order("created_at", { ascending: false })
@@ -165,7 +161,7 @@ const ProviderDashboard = () => {
               {reviews.map((review) => (
                 <TableRow key={review.id}>
                   <TableCell>
-                    {review.user.profiles.first_name} {review.user.profiles.last_name}
+                    {review.profiles.first_name} {review.profiles.last_name}
                   </TableCell>
                   <TableCell>{review.approval_status}</TableCell>
                   <TableCell>
