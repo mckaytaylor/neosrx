@@ -5,6 +5,7 @@ import { PaymentStep } from "@/components/PaymentStep";
 import { MedicalHistoryForm } from "@/components/MedicalHistoryForm";
 import { BasicInfoForm } from "@/components/BasicInfoForm";
 import { MedicationSelection } from "@/components/MedicationSelection";
+import { ShippingForm } from "@/components/ShippingForm";
 import { Welcome } from "@/components/Welcome";
 import { ConfirmationScreen } from "@/components/ConfirmationScreen";
 import { StepsNavigation } from "@/components/StepsNavigation";
@@ -130,6 +131,13 @@ export const DashboardContent = ({
           />
         );
       case 5:
+        return (
+          <ShippingForm
+            formData={formData}
+            onChange={(data) => setFormData({ ...formData, ...data })}
+          />
+        );
+      case 6:
         return formData.assessmentId ? (
           <PaymentStep
             subscriptionId={formData.assessmentId}
@@ -141,7 +149,7 @@ export const DashboardContent = ({
             <p className="text-red-500">Error loading assessment details</p>
           </div>
         );
-      case 6:
+      case 7:
         return formData.assessment ? (
           <ConfirmationScreen subscription={formData.assessment} />
         ) : (
@@ -158,7 +166,7 @@ export const DashboardContent = ({
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>Patient Application</CardTitle>
-        {currentStep < 6 && (
+        {currentStep < 7 && (
           <ProgressBar currentStep={currentStep} totalSteps={totalSteps} className="mt-2" />
         )}
       </CardHeader>

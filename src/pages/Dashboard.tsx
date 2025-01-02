@@ -8,7 +8,7 @@ import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
-  const totalSteps = 6;
+  const totalSteps = 7; // Updated to include shipping step
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,6 +101,10 @@ const Dashboard = () => {
     takingBloodThinners: "",
     selectedMedication: "",
     selectedPlan: "",
+    shippingAddress: "",
+    shippingCity: "",
+    shippingState: "",
+    shippingZip: "",
     assessment: null
   });
 
@@ -159,10 +163,14 @@ const Dashboard = () => {
             amount: getPlanAmount(formData.selectedMedication, formData.selectedPlan),
             medical_conditions: formData.selectedConditions,
             patient_height: parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0'),
-            patient_weight: parseInt(formData.weight)
+            patient_weight: parseInt(formData.weight),
+            shipping_address: formData.shippingAddress,
+            shipping_city: formData.shippingCity,
+            shipping_state: formData.shippingState,
+            shipping_zip: formData.shippingZip
           })
           .select()
-          .maybeSingle();
+          .single();
 
         if (error) throw error;
         setSubscriptionId(data?.id);

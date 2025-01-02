@@ -70,6 +70,28 @@ export const PatientDetailsModal = ({ patientId, isOpen, onClose }: PatientDetai
               </section>
 
               <section>
+                <h3 className="text-lg font-semibold mb-2">Shipping Information</h3>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p>{assessment.shipping_address}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">City</p>
+                    <p>{assessment.shipping_city}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">State</p>
+                    <p>{assessment.shipping_state}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">ZIP Code</p>
+                    <p>{assessment.shipping_zip}</p>
+                  </div>
+                </div>
+              </section>
+
+              <section>
                 <h3 className="text-lg font-semibold mb-2">Medical Conditions</h3>
                 {assessment.medical_conditions && assessment.medical_conditions.length > 0 ? (
                   <ul className="list-disc pl-5 space-y-1">
