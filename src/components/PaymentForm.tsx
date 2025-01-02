@@ -25,25 +25,20 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     setIsProcessing(true);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-payment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-          body: JSON.stringify({
-            paymentData,
-            subscriptionId,
-          }),
-        }
-      );
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("No active session");
+      }
 
-      const data = await response.json();
+      const response = await supabase.functions.invoke('process-payment', {
+        body: {
+          paymentData,
+          subscriptionId,
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error(data.message || "Payment processing failed");
+      if (response.error) {
+        throw new Error(response.error.message || "Payment processing failed");
       }
 
       toast({
@@ -52,6 +47,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
       });
       onSuccess();
     } catch (error) {
+      console.error('Payment error:', error);
       toast({
         title: "Payment Failed",
         description: error.message,
