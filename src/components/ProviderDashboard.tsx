@@ -20,7 +20,7 @@ const ProviderDashboard = () => {
         .from("provider_reviews")
         .select(`
           *,
-          profiles!provider_reviews_user_id_fkey(
+          profiles (
             first_name,
             last_name
           )
