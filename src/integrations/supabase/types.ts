@@ -110,6 +110,7 @@ export type Database = {
     }
     Enums: {
       approval_status: "Pending" | "Approved" | "Denied"
+      user_role: "user" | "provider"
     }
     CompositeTypes: {
       [_ in never]: never
