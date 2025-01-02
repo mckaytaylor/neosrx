@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConfirmationScreenProps {
   subscription: {
@@ -19,11 +20,45 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
   const capitalizedMedication = subscription?.medication?.charAt(0).toUpperCase() + subscription?.medication?.slice(1);
 
   useEffect(() => {
+    const sendConfirmationEmail = async () => {
+      if (subscription) {
+        try {
+          // Get the current user's email
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user?.email) {
+            console.error("No user email found");
+            return;
+          }
+
+          const { error } = await supabase.functions.invoke('send-confirmation-email', {
+            body: {
+              to: user.email,
+              subscription,
+            },
+          });
+
+          if (error) {
+            console.error("Error sending confirmation email:", error);
+            toast({
+              title: "Error",
+              description: "Failed to send confirmation email. Don't worry, your order is still confirmed!",
+              variant: "destructive",
+            });
+          } else {
+            console.log("Confirmation email sent successfully");
+          }
+        } catch (error) {
+          console.error("Error in sendConfirmationEmail:", error);
+        }
+      }
+    };
+
     if (subscription) {
       toast({
         title: "Payment Successful",
         description: "Your order has been confirmed.",
       });
+      sendConfirmationEmail();
     }
   }, [toast, subscription]);
 
