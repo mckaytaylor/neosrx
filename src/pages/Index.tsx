@@ -27,12 +27,17 @@ const Index = () => {
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
+          options: {
+            data: {
+              first_name: data.firstName,
+              last_name: data.lastName,
+            }
+          }
         });
 
         if (signUpError) throw signUpError;
 
         if (signUpData.user) {
-          // Create profile after successful signup
           const { error: profileError } = await supabase
             .from("profiles")
             .insert({
@@ -62,6 +67,7 @@ const Index = () => {
         });
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Error",
         description: error.message,
