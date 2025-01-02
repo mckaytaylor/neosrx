@@ -20,6 +20,22 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     cardCode: "",
   });
 
+  const handleExpirationDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    
+    if (value.length > 6) {
+      value = value.slice(0, 6);
+    }
+    
+    if (value.length >= 2) {
+      const month = value.slice(0, 2);
+      const year = value.slice(2);
+      value = `${month}/${year}`;
+    }
+
+    setPaymentData({ ...paymentData, expirationDate: value });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -74,9 +90,10 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
         <Label htmlFor="expirationDate">Expiration Date (MM/YYYY)</Label>
         <Input
           id="expirationDate"
-          placeholder="12/2025"
+          placeholder="MM/YYYY"
           value={paymentData.expirationDate}
-          onChange={(e) => setPaymentData({ ...paymentData, expirationDate: e.target.value })}
+          onChange={handleExpirationDateChange}
+          maxLength={7}
           required
         />
       </div>
