@@ -70,7 +70,6 @@ export const DashboardContent = ({
         return;
       }
 
-      // Calculate amount based on medication and plan
       const amounts: Record<string, Record<string, number>> = {
         tirzepatide: {
           "1 month": 499,
@@ -104,26 +103,26 @@ export const DashboardContent = ({
         return;
       }
 
-      // Ensure medical conditions is an array
       const medicalConditions = Array.isArray(formData.selectedConditions) 
         ? formData.selectedConditions 
         : [];
 
-      // Parse height and weight to numbers
       const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
       const weight = parseInt(formData.weight);
 
+      const assessmentData = {
+        user_id: user.id,
+        medication: medication,
+        plan_type: plan,
+        amount: amount,
+        medical_conditions: medicalConditions,
+        patient_height: height || null,
+        patient_weight: weight || null
+      };
+
       const { data, error } = await supabase
         .from('assessments')
-        .insert({
-          user_id: user.id,
-          medication: medication,
-          plan_type: plan,
-          amount: amount,
-          medical_conditions: medicalConditions,
-          patient_height: height || null,
-          patient_weight: weight || null
-        })
+        .insert(assessmentData)
         .select()
         .single();
 
