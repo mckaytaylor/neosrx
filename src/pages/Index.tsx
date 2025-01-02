@@ -16,7 +16,6 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Listen for auth state changes, including email confirmation
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
       toast({
@@ -29,6 +28,12 @@ const Index = () => {
 
   const handleStart = () => {
     setShowAuth(true);
+    setAuthMode("register");
+  };
+
+  const handleLoginClick = () => {
+    setShowAuth(true);
+    setAuthMode("login");
   };
 
   const handleAuthSubmit = async (data: { 
@@ -141,13 +146,33 @@ const Index = () => {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Complete our comprehensive assessment to determine if GLP-1 medications like Semaglutide or Tirzepatide are right for you.
             </p>
-            <Button 
-              size="lg"
-              onClick={handleStart}
-              className="mt-8"
-            >
-              Start Assessment
-            </Button>
+            <div className="flex flex-col items-center gap-4">
+              <Button 
+                size="lg"
+                onClick={handleStart}
+                className="w-full max-w-md"
+              >
+                Start Assessment
+              </Button>
+              <div className="relative w-full max-w-md">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or
+                  </span>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={handleLoginClick}
+                className="w-full max-w-md"
+              >
+                Already Started? Log In
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="max-w-md mx-auto space-y-8">
