@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -66,12 +67,12 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
       </Card>
 
       <div className="text-center">
-        <button
+        <Button
+          variant="link"
           onClick={() => navigate("/dashboard")}
-          className="text-primary hover:underline"
         >
           Return to Dashboard
-        </button>
+        </Button>
       </div>
     </div>
   );
