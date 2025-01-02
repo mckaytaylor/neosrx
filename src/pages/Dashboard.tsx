@@ -1,45 +1,37 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import ProviderDashboard from "@/components/ProviderDashboard";
+import { useToast } from "@/hooks/use-toast";
 import { PatientDashboard } from "@/components/PatientDashboard";
 
 const Dashboard = () => {
-  const [isProvider, setIsProvider] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkUserRole = async () => {
+    const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
         if (!user) {
           navigate("/");
           return;
         }
-
-        const isProviderUser = user.user_metadata?.role === 'provider' && 
-                             user.user_metadata?.provider === true;
-        
-        setIsProvider(isProviderUser);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error checking user role:", error);
+        console.error("Error checking auth:", error);
         toast({
           title: "Error",
-          description: "Failed to verify user role. Please try logging in again.",
+          description: "Failed to verify authentication. Please try logging in again.",
           variant: "destructive",
         });
         navigate("/");
       }
     };
 
-    checkUserRole();
+    checkAuth();
   }, [navigate, toast]);
 
   const handleLogout = async () => {
@@ -80,11 +72,7 @@ const Dashboard = () => {
         </Button>
       </div>
       
-      {isProvider ? (
-        <ProviderDashboard />
-      ) : (
-        <PatientDashboard />
-      )}
+      <PatientDashboard />
     </div>
   );
 };
