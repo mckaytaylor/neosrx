@@ -16,6 +16,7 @@ serve(async (req) => {
     // Parse request body
     const { paymentData, subscriptionId } = await req.json()
     if (!paymentData || !subscriptionId) {
+      console.error('Missing required payment data or subscription ID')
       throw new Error('Missing required payment data')
     }
 
@@ -25,6 +26,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase configuration')
       throw new Error('Missing Supabase configuration')
     }
 
@@ -46,6 +48,7 @@ serve(async (req) => {
     const authLoginId = Deno.env.get('AUTHORIZENET_API_LOGIN_ID')
     const transactionKey = Deno.env.get('AUTHORIZENET_TRANSACTION_KEY')
     if (!authLoginId || !transactionKey) {
+      console.error('Missing Authorize.net credentials')
       throw new Error('Missing Authorize.net credentials')
     }
 
@@ -129,7 +132,7 @@ serve(async (req) => {
       throw new Error(errorMessage)
     }
 
-    // Update assessment status to 'completed' instead of 'active'
+    // Update assessment status to 'completed'
     const { error: updateError } = await supabase
       .from('assessments')
       .update({ status: 'completed' })
@@ -160,7 +163,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: true, 
-        message: error.message 
+        message: error.message || 'The transaction was unsuccessful.'
       }),
       { 
         status: 400,
