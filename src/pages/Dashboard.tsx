@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, Pill } from "lucide-react";
+import { Stethoscope, Pill, CreditCard, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
@@ -15,7 +16,8 @@ const Dashboard = () => {
     medicalConditions: "",
     allergies: "",
     currentMedications: "",
-    selectedMedication: ""
+    selectedMedication: "",
+    selectedPlan: ""
   });
 
   const handleNext = () => {
@@ -103,6 +105,133 @@ const Dashboard = () => {
             </RadioGroup>
           </div>
         );
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <CreditCard className="w-6 h-6 text-primary" />
+              <h3 className="text-xl font-semibold">Select Your Plan</h3>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Monthly Plan */}
+              <Card className={cn(
+                "relative cursor-pointer transition-all hover:shadow-lg",
+                formData.selectedPlan === "monthly" && "border-primary ring-2 ring-primary"
+              )}
+              onClick={() => setFormData({ ...formData, selectedPlan: "monthly" })}>
+                <CardHeader>
+                  <CardTitle className="text-lg">Monthly Plan</CardTitle>
+                  <div className="absolute top-4 right-4">
+                    {formData.selectedPlan === "monthly" && (
+                      <Check className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold">$349<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        Monthly prescription
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        Medical consultation included
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        Cancel anytime
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quarterly Plan */}
+              <Card className={cn(
+                "relative cursor-pointer transition-all hover:shadow-lg",
+                formData.selectedPlan === "quarterly" && "border-primary ring-2 ring-primary"
+              )}
+              onClick={() => setFormData({ ...formData, selectedPlan: "quarterly" })}>
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
+                    Most Popular
+                  </span>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg">Quarterly Plan</CardTitle>
+                  <div className="absolute top-4 right-4">
+                    {formData.selectedPlan === "quarterly" && (
+                      <Check className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold">$299<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+                    <p className="text-sm text-muted-foreground">Save $150 per quarter</p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        3-month supply
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        Medical consultation included
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        Priority support
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Semi-Annual Plan */}
+              <Card className={cn(
+                "relative cursor-pointer transition-all hover:shadow-lg",
+                formData.selectedPlan === "semiannual" && "border-primary ring-2 ring-primary"
+              )}
+              onClick={() => setFormData({ ...formData, selectedPlan: "semiannual" })}>
+                <CardHeader>
+                  <CardTitle className="text-lg">Semi-Annual Plan</CardTitle>
+                  <div className="absolute top-4 right-4">
+                    {formData.selectedPlan === "semiannual" && (
+                      <Check className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold">$249<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+                    <p className="text-sm text-muted-foreground">Save $600 per 6 months</p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        6-month supply
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        Medical consultation included
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 mr-2 text-primary" />
+                        VIP support access
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="mt-6 text-sm text-muted-foreground text-center">
+              All plans include free shipping and 24/7 medical support
+            </div>
+          </div>
+        );
       default:
         return (
           <div className="text-center">
@@ -117,7 +246,7 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Patient Application</CardTitle>
           <ProgressBar currentStep={currentStep} totalSteps={totalSteps} className="mt-2" />
@@ -134,9 +263,9 @@ const Dashboard = () => {
             </Button>
             <Button
               onClick={handleNext}
-              disabled={currentStep === totalSteps}
+              disabled={currentStep === totalSteps || (currentStep === 4 && !formData.selectedPlan)}
             >
-              Next
+              {currentStep === 4 ? 'Continue to Payment' : 'Next'}
             </Button>
           </div>
         </CardContent>
