@@ -33,7 +33,6 @@ const ProviderDashboard = () => {
           return
         }
 
-        // Add debug logging
         console.log("User metadata:", {
           role: user.app_metadata?.role,
           is_provider: user.app_metadata?.is_provider,
