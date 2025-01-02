@@ -56,33 +56,21 @@ export const UserManagement = () => {
   const { data: profiles } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      // First get all profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false })
-
-      if (profilesError) throw profilesError
-
-      // Then get the emails from auth.users
-      const { data: usersData, error: usersError } = await supabase
-        .from("auth.users")
-        .select("id, email")
-
-      if (usersError) throw usersError
-
-      // Map the users data to a dictionary for easy lookup
-      const userEmails = (usersData || []).reduce((acc, user) => {
+      const { data: { users } } = await supabase.auth.admin.listUsers()
+      const userEmails = users.reduce((acc, user) => {
         acc[user.id] = user.email
         return acc
       }, {} as Record<string, string>)
 
-      // Combine the data
+      const { data: profilesData, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+
       return (profilesData || []).map(profile => ({
-        id: profile.id,
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        provider_role: profile.provider_role,
+        ...profile,
         email: userEmails[profile.id]
       })) as Profile[]
     },
