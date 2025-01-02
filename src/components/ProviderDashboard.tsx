@@ -70,7 +70,7 @@ const ProviderDashboard = () => {
       .from("assessments")
       .select(`
         *,
-        profiles!assessments_user_id_fkey (
+        profiles!assessments_user_id_profiles_fk (
           first_name,
           last_name
         )
