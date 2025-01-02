@@ -24,30 +24,30 @@ const Index = () => {
   }) => {
     try {
       if (authMode === "register") {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
         });
 
         if (signUpError) throw signUpError;
 
-        // Create profile after successful signup
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: (await supabase.auth.getUser()).data.user?.id,
+        if (signUpData.user) {
+          // Create profile after successful signup
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              id: signUpData.user.id,
               first_name: data.firstName,
               last_name: data.lastName,
-            }
-          ]);
+            });
 
-        if (profileError) throw profileError;
+          if (profileError) throw profileError;
 
-        toast({
-          title: "Account created",
-          description: "Please check your email to verify your account.",
-        });
+          toast({
+            title: "Account created",
+            description: "Please check your email to verify your account.",
+          });
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: data.email,
