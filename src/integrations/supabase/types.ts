@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assessments: {
+        Row: {
+          amount: number
+          assessment_date: string | null
+          created_at: string
+          id: string
+          medical_conditions: string[] | null
+          medication: string
+          patient_height: number | null
+          patient_weight: number | null
+          plan_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          assessment_date?: string | null
+          created_at?: string
+          id?: string
+          medical_conditions?: string[] | null
+          medication: string
+          patient_height?: number | null
+          patient_weight?: number | null
+          plan_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          assessment_date?: string | null
+          created_at?: string
+          id?: string
+          medical_conditions?: string[] | null
+          medication?: string
+          patient_height?: number | null
+          patient_weight?: number | null
+          plan_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -35,7 +80,7 @@ export type Database = {
       }
       provider_reviews: {
         Row: {
-          approval_status: Database["public"]["Enums"]["approval_status"]
+          approval_status: string | null
           created_at: string
           id: string
           provider_notes: string | null
@@ -43,7 +88,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approval_status?: string | null
           created_at?: string
           id?: string
           provider_notes?: string | null
@@ -51,43 +96,10 @@ export type Database = {
           user_id: string
         }
         Update: {
-          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approval_status?: string | null
           created_at?: string
           id?: string
           provider_notes?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      subscriptions: {
-        Row: {
-          amount: number
-          created_at: string
-          id: string
-          medication: string
-          plan_type: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          medication: string
-          plan_type: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          medication?: string
-          plan_type?: string
-          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -102,6 +114,8 @@ export type Database = {
     }
     Enums: {
       approval_status: "Pending" | "Approved" | "Denied"
+      provider_role: "admin" | "provider"
+      user_role: "user" | "provider"
     }
     CompositeTypes: {
       [_ in never]: never
