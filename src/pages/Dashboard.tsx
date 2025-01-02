@@ -94,50 +94,6 @@ const Dashboard = () => {
   };
 
   const handleNext = async () => {
-    if (currentStep === 4 && formData.selectedPlan) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          toast({
-            title: "Error",
-            description: "Please sign in to continue",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from("assessments")
-          .insert({
-            user_id: user.id,
-            plan_type: formData.selectedPlan,
-            medication: formData.selectedMedication,
-            amount: getPlanAmount(formData.selectedMedication, formData.selectedPlan),
-            medical_conditions: formData.selectedConditions,
-            patient_height: parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0'),
-            patient_weight: parseInt(formData.weight),
-            shipping_address: formData.shippingAddress,
-            shipping_city: formData.shippingCity,
-            shipping_state: formData.shippingState,
-            shipping_zip: formData.shippingZip
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        setSubscriptionId(data?.id);
-        setSubscription(data);
-      } catch (error) {
-        console.error('Error saving assessment:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save assessment. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }

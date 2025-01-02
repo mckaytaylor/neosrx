@@ -70,6 +70,28 @@ export const DashboardContent = ({
 
   const handlePaymentSuccess = async (assessmentId: string) => {
     try {
+      // Update the assessment with shipping information
+      const { error: updateError } = await supabase
+        .from('assessments')
+        .update({
+          shipping_address: formData.shippingAddress,
+          shipping_city: formData.shippingCity,
+          shipping_state: formData.shippingState,
+          shipping_zip: formData.shippingZip,
+          status: 'active'
+        })
+        .eq('id', assessmentId);
+
+      if (updateError) {
+        console.error('Error updating shipping info:', updateError);
+        toast({
+          title: "Error",
+          description: "Failed to save shipping information. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: assessment, error } = await supabase
         .from('assessments')
         .select('*')
