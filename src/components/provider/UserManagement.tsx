@@ -21,6 +21,11 @@ interface Profile {
   email?: string
 }
 
+interface AuthUser {
+  id: string
+  email?: string
+}
+
 export const UserManagement = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -57,8 +62,10 @@ export const UserManagement = () => {
     queryKey: ["profiles"],
     queryFn: async () => {
       const { data: { users } } = await supabase.auth.admin.listUsers()
-      const userEmails = users.reduce((acc, user) => {
-        acc[user.id] = user.email
+      const userEmails = (users as AuthUser[]).reduce((acc, user) => {
+        if (user.email) {
+          acc[user.id] = user.email
+        }
         return acc
       }, {} as Record<string, string>)
 
