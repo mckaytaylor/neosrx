@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthForm } from "@/components/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ProviderLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +22,10 @@ const ProviderLogin = () => {
 
       if (signInError) {
         console.error("Sign in error:", signInError);
+        // Check for specific error messages
+        if (signInError.message.includes("Email not confirmed")) {
+          throw new Error("Please check your email and confirm your account before logging in.");
+        }
         throw signInError;
       }
 
@@ -113,6 +117,9 @@ const ProviderLogin = () => {
       if (!user) {
         throw new Error("No user returned after registration");
       }
+
+      // Sign out after registration to ensure email verification
+      await supabase.auth.signOut();
 
       toast({
         title: "Registration successful!",
