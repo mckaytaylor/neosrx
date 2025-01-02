@@ -30,6 +30,13 @@ const ProviderDashboard = () => {
           return
         }
 
+        // Add debug logging
+        console.log("User metadata:", {
+          role: user.app_metadata?.role,
+          is_provider: user.app_metadata?.is_provider,
+          user_id: user.id
+        })
+
         const isProviderUser = user.app_metadata?.is_provider === true && 
                              user.app_metadata?.role === 'provider'
 
@@ -66,6 +73,7 @@ const ProviderDashboard = () => {
   }, [navigate, toast, authChecked])
 
   const fetchAssessments = async () => {
+    // Add debug logging for the query
     const { data: assessmentsData, error: assessmentsError } = await supabase
       .from("assessments")
       .select(`
@@ -81,6 +89,9 @@ const ProviderDashboard = () => {
       console.error("Error fetching assessments:", assessmentsError)
       throw assessmentsError
     }
+
+    // Add debug logging for the results
+    console.log("Fetched assessments:", assessmentsData)
     return assessmentsData as Assessment[]
   }
 
