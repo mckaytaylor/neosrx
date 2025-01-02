@@ -2,18 +2,72 @@ import { useState } from "react";
 import { AuthForm } from "@/components/AuthForm";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ProgressBar";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleStart = () => {
     setShowAuth(true);
   };
 
-  const handleAuthSubmit = (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
-    console.log("Auth data:", data);
-    // TODO: Implement authentication
+  const handleAuthSubmit = async (data: { 
+    email: string; 
+    password: string; 
+    firstName?: string; 
+    lastName?: string 
+  }) => {
+    try {
+      if (authMode === "register") {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: data.email,
+          password: data.password,
+        });
+
+        if (signUpError) throw signUpError;
+
+        // Create profile after successful signup
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: (await supabase.auth.getUser()).data.user?.id,
+              first_name: data.firstName,
+              last_name: data.lastName,
+            }
+          ]);
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: "Account created",
+          description: "Please check your email to verify your account.",
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
