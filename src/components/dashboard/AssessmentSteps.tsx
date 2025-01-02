@@ -65,10 +65,12 @@ export const AssessmentSteps = ({
         />
       );
     case 6:
-      return formData.assessmentId ? (
+      // Check if we have a draft assessment ID from the formData
+      const assessmentId = formData.id || formData.assessmentId;
+      return assessmentId ? (
         <PaymentStep
-          subscriptionId={formData.assessmentId}
-          onSuccess={() => onPaymentSuccess(formData.assessmentId)}
+          subscriptionId={assessmentId}
+          onSuccess={() => onPaymentSuccess(assessmentId)}
           onBack={onPrevious}
         />
       ) : (
