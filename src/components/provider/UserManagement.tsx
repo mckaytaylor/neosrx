@@ -47,23 +47,16 @@ export const UserManagement = () => {
   const { data: profiles } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("No user found")
-
       const { data, error } = await supabase
         .from("profiles")
-        .select(`
-          *,
-          auth.users (
-            email
-          )
-        `)
+        .select("*, users:auth.users(email)")
         .order("created_at", { ascending: false })
 
       if (error) throw error
+
       return data.map(profile => ({
         ...profile,
-        email: profile.auth?.users?.email
+        email: profile.users?.email
       })) as Profile[]
     },
     enabled: isAdmin,

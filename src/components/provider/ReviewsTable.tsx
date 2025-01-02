@@ -13,12 +13,12 @@ interface Review {
   id: string
   user_id: string
   provider_notes: string | null
-  approval_status: "Pending" | "Approved" | "Denied" | "Unsubmitted"
+  approval_status: "Pending" | "Approved" | "Denied" | null
   created_at: string
-  application_status?: string
   profiles: {
     first_name: string | null
     last_name: string | null
+    application_status: string | null
   } | null
 }
 
@@ -55,8 +55,8 @@ export const ReviewsTable = ({
                 <TableCell>
                   {review.profiles?.first_name} {review.profiles?.last_name}
                 </TableCell>
-                <TableCell>{review.approval_status}</TableCell>
-                <TableCell>{review.application_status || "Not started"}</TableCell>
+                <TableCell>{review.approval_status || "Unsubmitted"}</TableCell>
+                <TableCell>{review.profiles?.application_status || "Not started"}</TableCell>
                 <TableCell>
                   {new Date(review.created_at).toLocaleDateString()}
                 </TableCell>

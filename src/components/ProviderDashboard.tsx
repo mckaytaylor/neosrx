@@ -73,7 +73,7 @@ const ProviderDashboard = () => {
   }
 
   const unsubmittedReviews = reviews?.filter(
-    (r) => !r.approval_status || r.approval_status === "Unsubmitted"
+    (r) => !r.approval_status || r.profiles?.application_status === "unsubmitted"
   ) || []
   const pendingReviews = reviews?.filter(
     (r) => r.approval_status === "Pending"
