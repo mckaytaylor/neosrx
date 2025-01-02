@@ -20,8 +20,8 @@ const Dashboard = () => {
   const totalSteps = 6;
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
-  const [subscription, setSubscription] = useState<any>(null);
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const [assessment, setAssessment] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     // Basic Info
@@ -98,7 +98,7 @@ const Dashboard = () => {
           return;
         }
 
-        const { data, error } = await supabase.from("subscriptions").insert({
+        const { data, error } = await supabase.from("assessments").insert({
           user_id: user.id,
           plan_type: formData.selectedPlan,
           medication: formData.selectedMedication,
@@ -106,12 +106,12 @@ const Dashboard = () => {
         }).select().single();
 
         if (error) throw error;
-        setSubscriptionId(data.id);
-        setSubscription(data);
+        setAssessmentId(data.id);
+        setAssessment(data);
       } catch (error) {
         toast({
           title: "Error",
-          description: "Failed to save subscription. Please try again.",
+          description: "Failed to save assessment. Please try again.",
           variant: "destructive",
         });
         return;
@@ -162,20 +162,20 @@ const Dashboard = () => {
           />
         );
       case 5:
-        return subscriptionId ? (
+        return assessmentId ? (
           <PaymentStep
-            subscriptionId={subscriptionId}
+            assessmentId={assessmentId}
             onSuccess={() => setCurrentStep(currentStep + 1)}
             onBack={handlePrevious}
           />
         ) : (
           <div className="text-center">
-            <p className="text-red-500">Error loading subscription details</p>
+            <p className="text-red-500">Error loading assessment details</p>
           </div>
         );
       case 6:
-        return subscription ? (
-          <ConfirmationScreen subscription={subscription} />
+        return assessment ? (
+          <ConfirmationScreen assessment={assessment} />
         ) : (
           <div className="text-center">
             <p className="text-red-500">Error loading order details</p>

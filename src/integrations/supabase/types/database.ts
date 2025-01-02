@@ -58,34 +58,46 @@ export interface Database {
           user_id?: string
         }
       }
-      subscriptions: {
+      assessments: {
         Row: {
           amount: number
+          assessment_date: string | null
           created_at: string
           id: string
+          medical_conditions: string[] | null
           medication: string
+          patient_height: number | null
+          patient_weight: number | null
           plan_type: string
-          status: string
+          status: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           amount: number
+          assessment_date?: string | null
           created_at?: string
           id?: string
+          medical_conditions?: string[] | null
           medication: string
+          patient_height?: number | null
+          patient_weight?: number | null
           plan_type: string
-          status?: string
+          status?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           amount?: number
+          assessment_date?: string | null
           created_at?: string
           id?: string
+          medical_conditions?: string[] | null
           medication?: string
+          patient_height?: number | null
+          patient_weight?: number | null
           plan_type?: string
-          status?: string
+          status?: string | null
           updated_at?: string
           user_id?: string
         }

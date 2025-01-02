@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "react-router-dom"
+import { LogOut } from "lucide-react"
 
 interface Review {
   id: string
@@ -18,15 +20,18 @@ interface Review {
   provider_notes: string | null
   approval_status: "Pending" | "Approved" | "Denied"
   created_at: string
-  profiles: {
-    first_name: string | null
-    last_name: string | null
+  user: {
+    profiles: {
+      first_name: string | null
+      last_name: string | null
+    }
   }
 }
 
 const ProviderDashboard = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["provider-reviews"],
@@ -35,12 +40,17 @@ const ProviderDashboard = () => {
         .from("provider_reviews")
         .select(`
           *,
-          profiles:profiles(first_name, last_name)
+          user:user_id (
+            profiles (
+              first_name,
+              last_name
+            )
+          )
         `)
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      return data as Review[]
+      return data as unknown as Review[]
     },
   })
 
@@ -86,13 +96,40 @@ const ProviderDashboard = () => {
     updateReviewStatus.mutate({ reviewId, status, notes })
   }
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      })
+      navigate("/")
+    } catch (error) {
+      toast({
+        title: "Error logging out",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (isLoading) {
     return <div>Loading...</div>
   }
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Provider Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Provider Dashboard</h1>
+        <Button 
+          variant="outline" 
+          onClick={handleLogout}
+          className="gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -107,7 +144,7 @@ const ProviderDashboard = () => {
             {reviews?.map((review) => (
               <TableRow key={review.id}>
                 <TableCell>
-                  {review.profiles.first_name} {review.profiles.last_name}
+                  {review.user.profiles.first_name} {review.user.profiles.last_name}
                 </TableCell>
                 <TableCell>{review.approval_status}</TableCell>
                 <TableCell>

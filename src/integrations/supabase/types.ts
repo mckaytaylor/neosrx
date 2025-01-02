@@ -20,7 +20,7 @@ export type Database = {
           patient_height: number | null
           patient_weight: number | null
           plan_type: string
-          status: string
+          status: string | null
           updated_at: string
           user_id: string
         }
@@ -34,7 +34,7 @@ export type Database = {
           patient_height?: number | null
           patient_weight?: number | null
           plan_type: string
-          status?: string
+          status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -48,7 +48,7 @@ export type Database = {
           patient_height?: number | null
           patient_weight?: number | null
           plan_type?: string
-          status?: string
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
