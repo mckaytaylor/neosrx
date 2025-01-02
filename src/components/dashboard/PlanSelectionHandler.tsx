@@ -71,7 +71,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           medical_conditions: medicalConditions,
           patient_height: height || null,
           patient_weight: weight || null,
-          status: "needs_review"
+          status: 'pending'
         })
         .select()
         .single();

@@ -6,6 +6,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
   const [draftAssessmentId, setDraftAssessmentId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Load draft assessment data on mount
   useEffect(() => {
     const loadDraftAssessment = async () => {
       try {
@@ -16,7 +17,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           .from('assessments')
           .select('*')
           .eq('user_id', user.id)
-          .eq('status', 'needs_review')
+          .eq('status', 'draft')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -29,6 +30,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         if (assessment) {
           console.log('Found draft assessment:', assessment);
           setDraftAssessmentId(assessment.id);
+          // Update form data with saved values
           setFormData({
             ...formData,
             dateOfBirth: assessment.date_of_birth || "",
@@ -69,6 +71,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
     loadDraftAssessment();
   }, []);
 
+  // Save form data as draft when it changes
   useEffect(() => {
     const saveDraftAssessment = async () => {
       try {
@@ -78,6 +81,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
         const weight = parseFloat(formData.weight);
 
+        // Only proceed if we have some data to save
         if (!formData.selectedConditions?.length && !formData.weight && !formData.heightFeet) {
           return;
         }
@@ -89,31 +93,32 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           cell_phone: formData.cellPhone || null,
           medical_conditions: formData.selectedConditions || [],
           other_medical_conditions: formData.otherCondition || null,
-          medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes",
-          family_mtc_history: formData.familyMtcHistory === "yes",
-          men2: formData.men2 === "yes",
-          pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes",
+          medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes" || null,
+          family_mtc_history: formData.familyMtcHistory === "yes" || null,
+          men2: formData.men2 === "yes" || null,
+          pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes" || null,
           patient_height: isNaN(height) ? null : height,
           patient_weight: isNaN(weight) ? null : weight,
           exercise_activity: formData.exerciseActivity || null,
-          taking_medications: formData.takingMedications === "yes",
+          taking_medications: formData.takingMedications === "yes" || null,
           medications_list: formData.medicationsList || null,
-          previous_glp1: formData.previousGlp1 === "yes",
-          recent_glp1: formData.recentGlp1 === "yes",
-          has_allergies: formData.hasAllergies === "yes",
+          previous_glp1: formData.previousGlp1 === "yes" || null,
+          recent_glp1: formData.recentGlp1 === "yes" || null,
+          has_allergies: formData.hasAllergies === "yes" || null,
           allergies_list: formData.allergiesList || null,
-          taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || null,
-          plan_type: formData.selectedPlan || null,
+          taking_blood_thinners: formData.takingBloodThinners === "yes" || null,
+          medication: formData.selectedMedication || "pending",
+          plan_type: formData.selectedPlan || "pending",
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
           shipping_zip: formData.shippingZip || null,
-          status: "needs_review" as const,
+          status: 'draft',
           amount: 0
         };
 
         if (draftAssessmentId) {
+          // Update existing draft
           const { error } = await supabase
             .from('assessments')
             .update(assessmentData)
@@ -124,6 +129,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
             throw error;
           }
         } else {
+          // Create new draft
           const { data, error } = await supabase
             .from('assessments')
             .insert(assessmentData)

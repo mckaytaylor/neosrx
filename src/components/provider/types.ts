@@ -4,7 +4,7 @@ export interface Assessment {
   plan_type: string
   medication: string
   amount: number
-  status: "needs_review" | "prescribed" | "denied" | null
+  status: string | null
   assessment_date: string | null
   patient_weight: number | null
   patient_height: number | null
