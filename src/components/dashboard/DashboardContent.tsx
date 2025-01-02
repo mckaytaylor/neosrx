@@ -46,7 +46,6 @@ export const DashboardContent = ({
         return;
       }
 
-      // Update form data with selected medication
       setFormData({ ...formData, selectedMedication: medication });
       handleNext();
     } catch (error) {
@@ -85,19 +84,45 @@ export const DashboardContent = ({
         },
       };
 
-      const amount = amounts[formData.selectedMedication.toLowerCase()]?.[plan] || 0;
+      const medication = formData.selectedMedication.toLowerCase();
+      if (!medication || !amounts[medication]) {
+        toast({
+          title: "Error",
+          description: "Invalid medication selected",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      // Create the assessment
+      const amount = amounts[medication][plan];
+      if (amount === undefined) {
+        toast({
+          title: "Error",
+          description: "Invalid plan selected",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Ensure medical conditions is an array
+      const medicalConditions = Array.isArray(formData.selectedConditions) 
+        ? formData.selectedConditions 
+        : [];
+
+      // Parse height and weight to numbers
+      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
+      const weight = parseInt(formData.weight);
+
       const { data, error } = await supabase
         .from('assessments')
         .insert({
           user_id: user.id,
-          medication: formData.selectedMedication,
+          medication: medication,
           plan_type: plan,
           amount: amount,
-          medical_conditions: formData.selectedConditions,
-          patient_height: parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0'),
-          patient_weight: parseInt(formData.weight)
+          medical_conditions: medicalConditions,
+          patient_height: height || null,
+          patient_weight: weight || null
         })
         .select()
         .single();
