@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PricingPlans } from "@/components/PricingPlans";
 import { PaymentStep } from "@/components/PaymentStep";
@@ -10,6 +9,7 @@ import { MedicalHistoryForm } from "@/components/MedicalHistoryForm";
 import { MedicationSelection } from "@/components/MedicationSelection";
 import { Welcome } from "@/components/Welcome";
 import { ConfirmationScreen } from "@/components/ConfirmationScreen";
+import { StepsNavigation } from "@/components/StepsNavigation";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
@@ -24,6 +24,22 @@ const Dashboard = () => {
     selectedMedication: "",
     selectedPlan: ""
   });
+
+  const getPlanAmount = (medication: string, plan: string): number => {
+    const prices = {
+      tirzepatide: {
+        "1 month": 499,
+        "3 months": 810,
+        "5 months": 1300,
+      },
+      semaglutide: {
+        "1 month": 399,
+        "4 months": 640,
+        "7 months": 1050,
+      },
+    };
+    return prices[medication.toLowerCase()]?.[plan] || 0;
+  };
 
   const handleNext = async () => {
     if (currentStep === 4 && formData.selectedPlan) {
@@ -67,22 +83,6 @@ const Dashboard = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
-
-  const getPlanAmount = (medication: string, plan: string): number => {
-    const prices = {
-      tirzepatide: {
-        "1 month": 499,
-        "3 months": 810,
-        "5 months": 1300,
-      },
-      semaglutide: {
-        "1 month": 399,
-        "4 months": 640,
-        "7 months": 1050,
-      },
-    };
-    return prices[medication.toLowerCase()]?.[plan] || 0;
   };
 
   const renderStep = () => {
@@ -145,23 +145,13 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent>
           {renderStep()}
-          {currentStep !== 5 && currentStep !== 6 && (
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={handleNext}
-                disabled={currentStep === totalSteps || (currentStep === 4 && !formData.selectedPlan)}
-              >
-                {currentStep === 4 ? 'Continue to Payment' : 'Next'}
-              </Button>
-            </div>
-          )}
+          <StepsNavigation
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            isNextDisabled={currentStep === 4 && !formData.selectedPlan}
+          />
         </CardContent>
       </Card>
     </div>
