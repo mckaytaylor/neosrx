@@ -87,16 +87,6 @@ const Index = () => {
           return;
         }
 
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: signUpData.user.id,
-            first_name: data.firstName,
-            last_name: data.lastName,
-          });
-
-        if (profileError) throw profileError;
-
         toast({
           title: "Account created",
           description: "Please check your email to verify your account.",
