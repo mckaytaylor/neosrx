@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -8,11 +8,45 @@ import { useToast } from "@/hooks/use-toast"
 const ProviderLogin = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
   const { toast } = useToast()
 
+  // Check if user is already logged in as provider
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        const isProvider = session.user.app_metadata?.is_provider === true && 
+                         session.user.role === "provider"
+        if (isProvider) {
+          navigate("/provider/dashboard")
+        }
+      }
+    }
+    
+    checkSession()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const isProvider = session.user.app_metadata?.is_provider === true && 
+                         session.user.role === "provider"
+        if (isProvider) {
+          navigate("/provider/dashboard")
+        }
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [navigate])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -21,16 +55,13 @@ const ProviderLogin = () => {
 
       if (error) throw error
 
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) throw new Error("No user found")
-
-      const isProvider = user.app_metadata?.is_provider === true && 
-                        user.role === "provider"
+      const user = data.user
+      const isProvider = user?.app_metadata?.is_provider === true && 
+                        user?.role === "provider"
 
       if (!isProvider) {
         await supabase.auth.signOut()
-        throw new Error("Unauthorized access")
+        throw new Error("Unauthorized access. This login is for providers only.")
       }
 
       toast({
@@ -45,6 +76,8 @@ const ProviderLogin = () => {
         description: error.message,
         variant: "destructive",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -63,6 +96,7 @@ const ProviderLogin = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -72,10 +106,11 @@ const ProviderLogin = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full">
-            Sign In
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
       </div>
