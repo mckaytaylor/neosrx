@@ -61,6 +61,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
       const weight = parseInt(formData.weight);
 
+      // Simplified insert operation without .select()
       const { error } = await supabase
         .from('assessments')
         .insert({
@@ -75,7 +76,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         });
 
       if (error) {
-        console.error("Error selecting plan:", error);
+        console.error("Supabase error:", error);
         throw error;
       }
 
