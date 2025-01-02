@@ -42,16 +42,38 @@ serve(async (req) => {
       throw new Error('Assessment not found')
     }
 
-    // Process payment using fetch instead of the Authorize.net SDK
+    // Get Authorize.net credentials
     const authLoginId = Deno.env.get('AUTHORIZENET_API_LOGIN_ID')
     const transactionKey = Deno.env.get('AUTHORIZENET_TRANSACTION_KEY')
+    const signatureKey = Deno.env.get('AUTHORIZENET_SIGNATURE_KEY')
 
-    if (!authLoginId || !transactionKey) {
+    if (!authLoginId || !transactionKey || !signatureKey) {
       throw new Error('Missing Authorize.net credentials')
     }
 
-    // Use sandbox endpoint
+    console.log('Using Authorize.net sandbox endpoint')
     const authNetEndpoint = 'https://apitest.authorize.net/xml/v1/request.api'
+
+    // Create authentication signature
+    const timestamp = Math.floor(Date.now() / 1000)
+    const signatureString = `${authLoginId}^${paymentData.cardNumber}^${timestamp}^${assessment.amount}`
+    const encoder = new TextEncoder()
+    const data = encoder.encode(signatureString)
+    const key = encoder.encode(signatureKey)
+    const hmacDigest = await crypto.subtle.importKey(
+      "raw",
+      key,
+      { name: "HMAC", hash: "SHA-512" },
+      false,
+      ["sign"]
+    ).then(key => crypto.subtle.sign(
+      "HMAC",
+      key,
+      data
+    ));
+    const signature = Array.from(new Uint8Array(hmacDigest))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
     const paymentRequest = {
       createTransactionRequest: {
@@ -59,6 +81,7 @@ serve(async (req) => {
           name: authLoginId,
           transactionKey: transactionKey
         },
+        refId: subscriptionId,
         transactionRequest: {
           transactionType: "authCaptureTransaction",
           amount: assessment.amount,
@@ -68,11 +91,29 @@ serve(async (req) => {
               expirationDate: paymentData.expirationDate,
               cardCode: paymentData.cardCode
             }
+          },
+          retail: {
+            marketType: 2,
+            deviceType: 1
+          },
+          customerIP: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          userFields: {
+            userField: [
+              {
+                name: "x_signature",
+                value: signature
+              },
+              {
+                name: "x_timestamp",
+                value: timestamp.toString()
+              }
+            ]
           }
         }
       }
     }
 
+    console.log('Sending payment request to Authorize.net sandbox')
     const response = await fetch(authNetEndpoint, {
       method: 'POST',
       headers: {
@@ -84,8 +125,11 @@ serve(async (req) => {
     const paymentResponse = await response.json()
     console.log('Payment response:', paymentResponse)
 
-    if (!response.ok) {
-      throw new Error('Payment processing failed')
+    if (!response.ok || 
+        paymentResponse.messages?.resultCode !== "Ok" || 
+        paymentResponse.transactionResponse?.responseCode !== "1") {
+      console.error('Payment failed:', paymentResponse)
+      throw new Error(paymentResponse.messages?.message?.[0]?.text || 'Payment processing failed')
     }
 
     // Update assessment status
@@ -101,7 +145,10 @@ serve(async (req) => {
     console.log('Payment processed successfully for assessment:', subscriptionId)
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true,
+        transactionId: paymentResponse.transactionResponse?.transId
+      }),
       { 
         headers: { 
           ...corsHeaders,
