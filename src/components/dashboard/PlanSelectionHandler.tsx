@@ -74,7 +74,10 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           status: 'pending'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error selecting plan:", error);
+        throw error;
+      }
 
       onSuccess(plan);
     } catch (error: any) {
