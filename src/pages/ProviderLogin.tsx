@@ -114,29 +114,24 @@ const ProviderLogin = () => {
         throw new Error("No user returned after registration");
       }
 
-      // Create the profile record in a separate try-catch block
-      try {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              first_name: firstName,
-              last_name: lastName,
-            }
-          ])
-          .select()
-          .single();
+      // Create the profile record
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: user.id,
+            first_name: firstName,
+            last_name: lastName,
+          }
+        ])
+        .select()
+        .single();
 
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          throw profileError;
-        }
-      } catch (profileError: any) {
-        console.error("Profile creation failed:", profileError);
-        // If profile creation fails, clean up by deleting the auth user
-        await supabase.auth.admin.deleteUser(user.id);
-        throw new Error("Failed to create provider profile");
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        // If profile creation fails, sign out the user
+        await supabase.auth.signOut();
+        throw new Error("Failed to create provider profile. Please try again.");
       }
 
       toast({
@@ -153,6 +148,8 @@ const ProviderLogin = () => {
         description: error.message || "An unexpected error occurred during registration",
         variant: "destructive",
       });
+      // Ensure user is signed out if there was an error
+      await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
     }
