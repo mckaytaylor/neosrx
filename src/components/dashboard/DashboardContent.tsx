@@ -1,17 +1,11 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ProgressBar";
-import { PricingPlans } from "@/components/PricingPlans";
-import { PaymentStep } from "@/components/PaymentStep";
-import { MedicalHistoryForm } from "@/components/MedicalHistoryForm";
-import { BasicInfoForm } from "@/components/BasicInfoForm";
-import { MedicationSelection } from "@/components/MedicationSelection";
-import { ShippingForm } from "@/components/ShippingForm";
-import { Welcome } from "@/components/Welcome";
-import { ConfirmationScreen } from "@/components/ConfirmationScreen";
-import { StepsNavigation } from "@/components/StepsNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePlanSelection } from "./PlanSelectionHandler";
+import { usePaymentSuccess } from "./PaymentSuccessHandler";
+import { AssessmentSteps } from "./AssessmentSteps";
+import { StepsNavigation } from "@/components/StepsNavigation";
 
 interface DashboardContentProps {
   currentStep: number;
@@ -35,11 +29,20 @@ export const DashboardContent = ({
   subscription,
 }: DashboardContentProps) => {
   const { toast } = useToast();
+  
   const { handlePlanSelect } = usePlanSelection({
     formData,
     onSuccess: (plan, assessmentId) => {
       setFormData({ ...formData, selectedPlan: plan });
       setFormData(prev => ({ ...prev, assessmentId }));
+      handleNext();
+    },
+  });
+
+  const { handlePaymentSuccess } = usePaymentSuccess({
+    formData,
+    onSuccess: (assessment) => {
+      setFormData(prev => ({ ...prev, assessment }));
       handleNext();
     },
   });
@@ -68,122 +71,6 @@ export const DashboardContent = ({
     }
   };
 
-  const handlePaymentSuccess = async (assessmentId: string) => {
-    try {
-      // Update the assessment with shipping information
-      const { error: updateError } = await supabase
-        .from('assessments')
-        .update({
-          shipping_address: formData.shippingAddress,
-          shipping_city: formData.shippingCity,
-          shipping_state: formData.shippingState,
-          shipping_zip: formData.shippingZip,
-          status: 'active'
-        })
-        .eq('id', assessmentId);
-
-      if (updateError) {
-        console.error('Error updating shipping info:', updateError);
-        toast({
-          title: "Error",
-          description: "Failed to save shipping information. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: assessment, error } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('id', assessmentId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching assessment:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load order details. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setFormData(prev => ({ ...prev, assessment }));
-      handleNext();
-    } catch (error) {
-      console.error('Error in handlePaymentSuccess:', error);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 2:
-        return (
-          <>
-            <BasicInfoForm
-              formData={formData}
-              onChange={(data) => setFormData({ ...formData, ...data })}
-            />
-            <div className="mt-8">
-              <MedicalHistoryForm
-                formData={formData}
-                onChange={(data) => setFormData({ ...formData, ...data })}
-              />
-            </div>
-          </>
-        );
-      case 3:
-        return (
-          <MedicationSelection
-            selectedMedication={formData.selectedMedication}
-            onMedicationSelect={handleMedicationSelect}
-          />
-        );
-      case 4:
-        return (
-          <PricingPlans
-            selectedMedication={formData.selectedMedication}
-            selectedPlan={formData.selectedPlan}
-            onPlanSelect={handlePlanSelect}
-          />
-        );
-      case 5:
-        return (
-          <ShippingForm
-            formData={formData}
-            onChange={(data) => setFormData({ ...formData, ...data })}
-          />
-        );
-      case 6:
-        return formData.assessmentId ? (
-          <PaymentStep
-            subscriptionId={formData.assessmentId}
-            onSuccess={() => handlePaymentSuccess(formData.assessmentId)}
-            onBack={handlePrevious}
-          />
-        ) : (
-          <div className="text-center">
-            <p className="text-red-500">Error loading assessment details</p>
-          </div>
-        );
-      case 7:
-        return formData.assessment ? (
-          <ConfirmationScreen subscription={formData.assessment} />
-        ) : (
-          <div className="text-center">
-            <p className="text-red-500">Error loading order details</p>
-          </div>
-        );
-      default:
-        return <Welcome />;
-    }
-  };
-
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
@@ -193,7 +80,15 @@ export const DashboardContent = ({
         )}
       </CardHeader>
       <CardContent>
-        {renderStep()}
+        <AssessmentSteps
+          currentStep={currentStep}
+          formData={formData}
+          onFormDataChange={setFormData}
+          onMedicationSelect={handleMedicationSelect}
+          onPlanSelect={handlePlanSelect}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPrevious={handlePrevious}
+        />
         <StepsNavigation
           currentStep={currentStep}
           totalSteps={totalSteps}
