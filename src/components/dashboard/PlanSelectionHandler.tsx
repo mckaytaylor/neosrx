@@ -3,7 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PlanSelectionHandlerProps {
   formData: any;
-  onSuccess: (plan: string) => void;
+  onSuccess: (plan: string, assessmentId: string) => void;
 }
 
 export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerProps) => {
@@ -61,8 +61,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
       const weight = parseInt(formData.weight);
 
-      // Simplified insert operation without .select()
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('assessments')
         .insert({
           user_id: user.id,
@@ -73,14 +72,16 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           patient_height: height || null,
           patient_weight: weight || null,
           status: 'pending'
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error("Supabase error:", error);
         throw error;
       }
 
-      onSuccess(plan);
+      onSuccess(plan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({

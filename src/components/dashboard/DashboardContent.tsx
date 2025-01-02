@@ -36,8 +36,9 @@ export const DashboardContent = ({
   const { toast } = useToast();
   const { handlePlanSelect } = usePlanSelection({
     formData,
-    onSuccess: (plan) => {
+    onSuccess: (plan, assessmentId) => {
       setFormData({ ...formData, selectedPlan: plan });
+      setFormData(prev => ({ ...prev, assessmentId }));
       handleNext();
     },
   });
@@ -99,9 +100,9 @@ export const DashboardContent = ({
           />
         );
       case 5:
-        return subscriptionId ? (
+        return formData.assessmentId ? (
           <PaymentStep
-            subscriptionId={subscriptionId}
+            subscriptionId={formData.assessmentId}
             onSuccess={() => handleNext()}
             onBack={handlePrevious}
           />
