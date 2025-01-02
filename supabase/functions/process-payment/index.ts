@@ -30,10 +30,10 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get assessment details including shipping information
+    // Get assessment details
     const { data: assessment, error: assessmentError } = await supabase
       .from('assessments')
-      .select('*, profiles(first_name, last_name)')
+      .select('*')
       .eq('id', subscriptionId)
       .single()
 
@@ -88,21 +88,12 @@ serve(async (req) => {
             description: "No Tax Applied"
           },
           billTo: {
-            firstName: assessment.profiles?.first_name || "Not",
-            lastName: assessment.profiles?.last_name || "Provided",
-            address: assessment.shipping_address,
-            city: assessment.shipping_city,
-            state: assessment.shipping_state,
-            zip: assessment.shipping_zip,
-            country: "US"
-          },
-          shipTo: {
-            firstName: assessment.profiles?.first_name || "Not",
-            lastName: assessment.profiles?.last_name || "Provided",
-            address: assessment.shipping_address,
-            city: assessment.shipping_city,
-            state: assessment.shipping_state,
-            zip: assessment.shipping_zip,
+            firstName: "Test",
+            lastName: "Customer",
+            address: assessment.shipping_address || "123 Test St",
+            city: assessment.shipping_city || "Test City",
+            state: assessment.shipping_state || "CA",
+            zip: assessment.shipping_zip || "12345",
             country: "US"
           }
         }
