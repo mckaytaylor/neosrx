@@ -10,10 +10,10 @@ interface Review {
   approval_status: "Pending" | "Approved" | "Denied";
   created_at: string;
   updated_at: string;
-  profiles?: {
+  profiles: {
     first_name: string | null;
     last_name: string | null;
-  };
+  } | null;
 }
 
 export const ProviderDashboard = () => {
@@ -30,7 +30,7 @@ export const ProviderDashboard = () => {
         .from("provider_reviews")
         .select(`
           *,
-          profiles:user_id(
+          profiles:profiles!provider_reviews_user_id_fkey(
             first_name,
             last_name
           )
@@ -38,7 +38,7 @@ export const ProviderDashboard = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setReviews((data as unknown as Review[]) || []);
+      setReviews(data || []);
     } catch (error: any) {
       console.error("Error fetching reviews:", error);
       toast({

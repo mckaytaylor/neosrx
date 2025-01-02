@@ -102,32 +102,25 @@ const Dashboard = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { data, error } = await supabase
-      .from("assessments")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("assessments")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (error && error.code !== "PGRST116") {
+      if (error) throw error;
+      if (data) {
+        setAssessment(data);
+        if (data.status === "completed") {
+          setCurrentStep(6);
+        }
+      }
+    } catch (error) {
       console.error("Error fetching assessment:", error);
     }
-
-    if (data) {
-      setAssessment(data);
-      if (data.status === "completed") {
-        setCurrentStep(6);
-      }
-    }
-  };
-
-  const handleNext = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 6));
-  };
-
-  const handlePrevious = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleFormChange = (data: Partial<FormData>) => {
@@ -167,11 +160,11 @@ const Dashboard = () => {
             onPlanSelect={(plan) => handleFormChange({ selectedPlan: plan })}
           />
         )}
-        {currentStep === 5 && (
+        {currentStep === 5 && assessment && (
           <PaymentStep
-            subscriptionId={assessment?.id || ""}
-            onSuccess={handleNext}
-            onBack={handlePrevious}
+            subscriptionId={assessment.id}
+            onSuccess={() => setCurrentStep(6)}
+            onBack={() => setCurrentStep(4)}
           />
         )}
         {currentStep === 6 && assessment && (
@@ -186,8 +179,8 @@ const Dashboard = () => {
         <StepsNavigation
           currentStep={currentStep}
           totalSteps={6}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
+          onNext={() => setCurrentStep(prev => Math.min(prev + 1, 6))}
+          onPrevious={() => setCurrentStep(prev => Math.max(prev - 1, 1))}
         />
       </div>
     </div>
