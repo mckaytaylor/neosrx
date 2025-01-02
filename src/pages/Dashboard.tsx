@@ -5,33 +5,29 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import { AssessmentsList } from "@/components/dashboard/AssessmentsList";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
-  const totalSteps = 7; // Updated to include shipping step
+  const [showAssessmentForm, setShowAssessmentForm] = useState(false);
+  const totalSteps = 7;
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
 
-  // Fetch user data and assessment
+  // Fetch user data
   const { data: userData } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // Check if user is a provider
       const isProvider = user.app_metadata?.is_provider === true;
       
-      if (window.location.pathname === "/" && isProvider) {
+      if (isProvider) {
         navigate("/provider/dashboard");
-        return null;
-      }
-      
-      if (window.location.pathname === "/provider/dashboard" && !isProvider) {
-        navigate("/");
         return null;
       }
 
@@ -40,43 +36,15 @@ const Dashboard = () => {
     retry: false
   });
 
-  // Fetch latest assessment
-  const { data: latestAssessment } = useQuery({
-    queryKey: ['latest-assessment'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data, error } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching assessment:', error);
-        return null;
-      }
-
-      return data;
-    },
-    enabled: !!userData
-  });
-
-  // Handle assessment data persistence
+  // Handle state from navigation
   useEffect(() => {
-    if (latestAssessment) {
-      setSubscription(latestAssessment);
-      setSubscriptionId(latestAssessment.id);
-      
-      // If we have a completed assessment and showCompletedOrder is true, show the confirmation screen
-      if (location.state?.showCompletedOrder && latestAssessment.status === 'active') {
-        setCurrentStep(6);
-      }
+    const state = location.state as { startNew?: boolean; continueAssessment?: boolean };
+    if (state?.startNew || state?.continueAssessment) {
+      setShowAssessmentForm(true);
+    } else {
+      setShowAssessmentForm(false);
     }
-  }, [latestAssessment, location.state]);
+  }, [location.state]);
 
   const [formData, setFormData] = useState({
     dateOfBirth: "",
@@ -123,22 +91,6 @@ const Dashboard = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const getPlanAmount = (medication: string, plan: string): number => {
-    const prices = {
-      tirzepatide: {
-        "1 month": 499,
-        "3 months": 810,
-        "5 months": 1300,
-      },
-      semaglutide: {
-        "1 month": 399,
-        "4 months": 640,
-        "7 months": 1050,
-      },
-    };
-    return prices[medication.toLowerCase()]?.[plan] || 0;
   };
 
   const handleNext = async () => {
@@ -200,16 +152,20 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-6">
       <DashboardHeader onLogout={handleLogout} />
-      <DashboardContent
-        currentStep={currentStep}
-        totalSteps={totalSteps}
-        formData={formData}
-        setFormData={setFormData}
-        handleNext={handleNext}
-        handlePrevious={handlePrevious}
-        subscriptionId={subscriptionId}
-        subscription={subscription}
-      />
+      {showAssessmentForm ? (
+        <DashboardContent
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          formData={formData}
+          setFormData={setFormData}
+          handleNext={handleNext}
+          handlePrevious={handlePrevious}
+          subscriptionId={subscriptionId}
+          subscription={subscription}
+        />
+      ) : (
+        <AssessmentsList />
+      )}
     </div>
   );
 };
