@@ -19,6 +19,9 @@ interface Profile {
   last_name: string | null
   provider_role: "admin" | "provider" | null
   email?: string
+  users?: {
+    email: string
+  } | null
 }
 
 export const UserManagement = () => {
@@ -63,7 +66,7 @@ export const UserManagement = () => {
 
       if (error) throw error
 
-      return data.map(profile => ({
+      return (data || []).map(profile => ({
         ...profile,
         email: profile.users?.email
       })) as Profile[]
