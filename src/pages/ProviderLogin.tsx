@@ -29,7 +29,8 @@ const ProviderLogin = () => {
       
       if (userError) throw userError;
 
-      const isProvider = userData?.app_metadata?.provider === true;
+      // Check if the user has the provider role in their metadata
+      const isProvider = userData?.app_metadata?.role === 'provider';
 
       if (!isProvider) {
         // If not a provider, sign them out and show error

@@ -21,7 +21,7 @@ interface Review {
   profiles: {
     first_name: string | null
     last_name: string | null
-  }
+  } | null
 }
 
 const ProviderDashboard = () => {
@@ -35,7 +35,7 @@ const ProviderDashboard = () => {
         .from("provider_reviews")
         .select(`
           *,
-          profiles:profiles(first_name, last_name)
+          profiles(first_name, last_name)
         `)
         .order("created_at", { ascending: false })
 
@@ -107,7 +107,7 @@ const ProviderDashboard = () => {
             {reviews?.map((review) => (
               <TableRow key={review.id}>
                 <TableCell>
-                  {review.profiles.first_name} {review.profiles.last_name}
+                  {review.profiles?.first_name} {review.profiles?.last_name}
                 </TableCell>
                 <TableCell>{review.approval_status}</TableCell>
                 <TableCell>
