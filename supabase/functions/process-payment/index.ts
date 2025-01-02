@@ -45,9 +45,7 @@ serve(async (req) => {
     // Get Authorize.net credentials
     const authLoginId = Deno.env.get('AUTHORIZENET_API_LOGIN_ID')
     const transactionKey = Deno.env.get('AUTHORIZENET_TRANSACTION_KEY')
-    const signatureKey = Deno.env.get('AUTHORIZENET_SIGNATURE_KEY')
-
-    if (!authLoginId || !transactionKey || !signatureKey) {
+    if (!authLoginId || !transactionKey) {
       throw new Error('Missing Authorize.net credentials')
     }
 
@@ -59,6 +57,9 @@ serve(async (req) => {
     
     // Generate a shorter reference ID (first 20 chars of UUID should be unique enough)
     const shortRefId = subscriptionId.substring(0, 20)
+
+    // Format card number (remove spaces)
+    const cardNumber = paymentData.cardNumber.replace(/\s/g, '')
 
     const paymentRequest = {
       createTransactionRequest: {
@@ -72,14 +73,28 @@ serve(async (req) => {
           amount: assessment.amount.toString(),
           payment: {
             creditCard: {
-              cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
+              cardNumber: cardNumber,
               expirationDate: expDate,
               cardCode: paymentData.cardCode
             }
           },
-          retail: {
-            marketType: 2,
-            deviceType: 1
+          order: {
+            invoiceNumber: shortRefId,
+            description: `${assessment.medication} - ${assessment.plan_type}`
+          },
+          tax: {
+            amount: "0.00",
+            name: "No Tax",
+            description: "No Tax Applied"
+          },
+          billTo: {
+            firstName: "Test",
+            lastName: "Customer",
+            address: assessment.shipping_address || "123 Test St",
+            city: assessment.shipping_city || "Test City",
+            state: assessment.shipping_state || "CA",
+            zip: assessment.shipping_zip || "12345",
+            country: "US"
           }
         }
       }
