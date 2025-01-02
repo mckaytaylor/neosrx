@@ -90,13 +90,7 @@ const ProviderDashboard = () => {
     try {
       const { data, error } = await supabase
         .from("assessments")
-        .select(`
-          *,
-          profiles:profiles!assessments_user_id_profiles_fk (
-            first_name,
-            last_name
-          )
-        `)
+        .select("*, profiles(first_name, last_name)")
         .order('created_at', { ascending: false })
 
       if (error) {
