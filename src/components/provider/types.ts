@@ -4,7 +4,8 @@ export interface Review {
   provider_notes: string | null
   approval_status: "Pending" | "Approved" | "Denied"
   created_at: string
-  profiles: {
+  updated_at: string
+  user: {
     first_name: string | null
     last_name: string | null
   } | null

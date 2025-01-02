@@ -30,7 +30,7 @@ export const ReviewsTable = ({ reviews, onUpdateStatus }: ReviewsTableProps) => 
           {reviews.map((review) => (
             <TableRow key={review.id}>
               <TableCell>
-                {review.profiles?.first_name} {review.profiles?.last_name}
+                {review.user?.first_name} {review.user?.last_name}
               </TableCell>
               <TableCell>{review.approval_status}</TableCell>
               <TableCell>
