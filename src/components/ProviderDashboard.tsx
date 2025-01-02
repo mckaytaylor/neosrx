@@ -20,14 +20,17 @@ const ProviderDashboard = () => {
         .from("provider_reviews")
         .select(`
           *,
-          profiles (
+          profiles!provider_reviews_user_id_profiles_fk (
             first_name,
             last_name
           )
         `)
         .order("created_at", { ascending: false })
 
-      if (reviewsError) throw reviewsError
+      if (reviewsError) {
+        console.error("Error fetching reviews:", reviewsError)
+        throw reviewsError
+      }
       return reviewsData as Review[]
     },
   })
