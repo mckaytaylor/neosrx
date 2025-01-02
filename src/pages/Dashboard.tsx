@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
@@ -11,10 +11,11 @@ const Dashboard = () => {
   const totalSteps = 6;
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
 
-  // Fetch user data to check if they're a provider
+  // Fetch user data and assessment
   const { data: userData } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
@@ -24,13 +25,11 @@ const Dashboard = () => {
       // Check if user is a provider
       const isProvider = user.app_metadata?.is_provider === true;
       
-      // If on patient dashboard but is a provider, redirect to provider dashboard
       if (window.location.pathname === "/" && isProvider) {
         navigate("/provider/dashboard");
         return null;
       }
       
-      // If on provider dashboard but is not a provider, redirect to patient dashboard
       if (window.location.pathname === "/provider/dashboard" && !isProvider) {
         navigate("/");
         return null;
@@ -40,6 +39,44 @@ const Dashboard = () => {
     },
     retry: false
   });
+
+  // Fetch latest assessment
+  const { data: latestAssessment } = useQuery({
+    queryKey: ['latest-assessment'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('assessments')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error fetching assessment:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!userData
+  });
+
+  // Handle assessment data persistence
+  useEffect(() => {
+    if (latestAssessment) {
+      setSubscription(latestAssessment);
+      setSubscriptionId(latestAssessment.id);
+      
+      // If we have a completed assessment and showCompletedOrder is true, show the confirmation screen
+      if (location.state?.showCompletedOrder && latestAssessment.status === 'active') {
+        setCurrentStep(6);
+      }
+    }
+  }, [latestAssessment, location.state]);
 
   const [formData, setFormData] = useState({
     dateOfBirth: "",
@@ -63,7 +100,8 @@ const Dashboard = () => {
     allergiesList: "",
     takingBloodThinners: "",
     selectedMedication: "",
-    selectedPlan: ""
+    selectedPlan: "",
+    assessment: null
   });
 
   const handleLogout = async () => {
@@ -119,6 +157,9 @@ const Dashboard = () => {
             plan_type: formData.selectedPlan,
             medication: formData.selectedMedication,
             amount: getPlanAmount(formData.selectedMedication, formData.selectedPlan),
+            medical_conditions: formData.selectedConditions,
+            patient_height: parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0'),
+            patient_weight: parseInt(formData.weight)
           })
           .select()
           .single();
@@ -127,6 +168,7 @@ const Dashboard = () => {
         setSubscriptionId(data.id);
         setSubscription(data);
       } catch (error) {
+        console.error('Error saving assessment:', error);
         toast({
           title: "Error",
           description: "Failed to save assessment. Please try again.",
