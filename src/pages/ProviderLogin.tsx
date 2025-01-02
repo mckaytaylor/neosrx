@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthForm } from "@/components/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ProviderLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,17 +14,33 @@ const ProviderLogin = () => {
   const params = new URLSearchParams(window.location.search);
   const confirmationError = params.get('error_description');
   const confirmationType = params.get('type');
+  const accessToken = params.get('access_token');
   
-  if (confirmationError) {
+  // Handle automatic login after email confirmation
+  if (accessToken && confirmationType === 'signup') {
+    // Set the session in Supabase
+    supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: params.get('refresh_token') || '',
+    }).then(() => {
+      toast({
+        title: "Success",
+        description: "Your email has been confirmed! Redirecting to dashboard...",
+      });
+      navigate("/dashboard");
+    }).catch((error) => {
+      console.error("Session error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to set session. Please try logging in manually.",
+        variant: "destructive",
+      });
+    });
+  } else if (confirmationError) {
     toast({
       title: "Error",
       description: decodeURIComponent(confirmationError),
       variant: "destructive",
-    });
-  } else if (confirmationType === 'signup') {
-    toast({
-      title: "Success",
-      description: "Your email has been confirmed! You can now log in.",
     });
   }
 
