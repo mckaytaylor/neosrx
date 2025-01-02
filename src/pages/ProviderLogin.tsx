@@ -14,47 +14,28 @@ const ProviderLogin = () => {
     try {
       setIsLoading(true);
       
-      console.log("Attempting provider login...");
-      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
-        console.error("Sign in error:", signInError);
-        // Check for specific error messages
         if (signInError.message.includes("Email not confirmed")) {
-          throw new Error("Please check your email and confirm your account before logging in.");
+          throw new Error("Please verify your email before logging in.");
         }
-        throw signInError;
+        throw new Error("Invalid email or password.");
       }
 
-      if (!user) {
-        console.error("No user data returned");
-        throw new Error("No user returned after login");
-      }
-
-      // Fetch the user's metadata
-      const { data: { user: userData }, error: userError } = await supabase.auth.getUser();
+      // After successful login, check if user is a provider
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-        throw userError;
-      }
-
-      if (!userData) {
-        console.error("No user data found");
+      if (!user) {
         throw new Error("No user data found");
       }
 
-      console.log("User role:", userData.app_metadata?.role);
-      console.log("Is provider:", userData.app_metadata?.provider);
-
-      // Check if the user has the provider role
-      const isProvider = userData.app_metadata?.role === 'provider';
-
+      const isProvider = user.app_metadata?.role === 'provider';
+      
       if (!isProvider) {
-        console.error("User is not a provider");
         await supabase.auth.signOut();
         throw new Error("Unauthorized access. Provider accounts only.");
       }
@@ -69,10 +50,9 @@ const ProviderLogin = () => {
       console.error("Login error:", error);
       toast({
         title: "Error",
-        description: error.message || "Invalid login credentials",
+        description: error.message,
         variant: "destructive",
       });
-      // Sign out if there was an error
       await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
@@ -93,10 +73,7 @@ const ProviderLogin = () => {
     try {
       setIsLoading(true);
       
-      console.log("Attempting provider registration...");
-      
-      // Sign up the user with provider metadata
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -109,16 +86,13 @@ const ProviderLogin = () => {
         }
       });
 
-      if (signUpError) {
-        console.error("Sign up error:", signUpError);
-        throw signUpError;
+      if (signUpError) throw signUpError;
+
+      if (!data.user) {
+        throw new Error("Registration failed. Please try again.");
       }
 
-      if (!user) {
-        throw new Error("No user returned after registration");
-      }
-
-      // Sign out after registration to ensure email verification
+      // Sign out after registration
       await supabase.auth.signOut();
 
       toast({
@@ -126,17 +100,14 @@ const ProviderLogin = () => {
         description: "Please check your email to verify your account before logging in.",
       });
 
-      // Switch back to login mode
       setMode("login");
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
         title: "Error",
-        description: error.message || "An unexpected error occurred during registration",
+        description: error.message || "Registration failed. Please try again.",
         variant: "destructive",
       });
-      // Ensure user is signed out if there was an error
-      await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
     }
