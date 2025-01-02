@@ -49,7 +49,6 @@ const handler = async (req: Request): Promise<Response> => {
       </ul>
     `;
 
-    // Note: Replace 'your-domain.com' with your actual verified domain
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -57,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "no-reply@your-domain.com", // Replace with your verified domain email
+        from: "NEOS RX <no-reply@mybellehealth.com>",
         to: [to],
         subject: `Your ${capitalizedMedication} Order Confirmation`,
         html: emailHtml,
