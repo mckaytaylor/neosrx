@@ -91,7 +91,7 @@ const ProviderLogin = () => {
       
       console.log("Attempting provider registration...");
       
-      // Sign up the user with provider metadata
+      // First sign up the user
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -114,20 +114,29 @@ const ProviderLogin = () => {
         throw new Error("No user returned after registration");
       }
 
-      // Create the profile record
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: user.id,
-            first_name: firstName,
-            last_name: lastName,
-          }
-        ]);
+      // Create the profile record in a separate try-catch block
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: user.id,
+              first_name: firstName,
+              last_name: lastName,
+            }
+          ])
+          .select()
+          .single();
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw profileError;
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw profileError;
+        }
+      } catch (profileError: any) {
+        console.error("Profile creation failed:", profileError);
+        // If profile creation fails, clean up by deleting the auth user
+        await supabase.auth.admin.deleteUser(user.id);
+        throw new Error("Failed to create provider profile");
       }
 
       toast({
