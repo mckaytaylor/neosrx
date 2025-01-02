@@ -16,19 +16,13 @@ const ProviderDashboard = () => {
   const { data: reviews, isLoading, error } = useQuery({
     queryKey: ["provider-reviews"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: reviewsData, error: reviewsError } = await supabase
         .from("provider_reviews")
-        .select(`
-          *,
-          profiles:user_id(
-            first_name,
-            last_name
-          )
-        `)
+        .select("*, profiles(first_name, last_name)")
         .order("created_at", { ascending: false })
 
-      if (error) throw error
-      return data as Review[]
+      if (reviewsError) throw reviewsError
+      return reviewsData as Review[]
     },
   })
 
