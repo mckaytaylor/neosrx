@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Stethoscope, Pill } from "lucide-react";
 import { PricingPlans } from "@/components/PricingPlans";
+import { PaymentStep } from "@/components/PaymentStep";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -15,6 +16,7 @@ const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
   const totalSteps = 6;
   const { toast } = useToast();
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     medicalConditions: "",
     allergies: "",
@@ -36,14 +38,15 @@ const Dashboard = () => {
           return;
         }
 
-        const { error } = await supabase.from("subscriptions").insert({
+        const { data, error } = await supabase.from("subscriptions").insert({
           user_id: user.id,
           plan_type: formData.selectedPlan,
           medication: formData.selectedMedication,
           amount: getPlanAmount(formData.selectedMedication, formData.selectedPlan),
-        });
+        }).select().single();
 
         if (error) throw error;
+        setSubscriptionId(data.id);
       } catch (error) {
         toast({
           title: "Error",
@@ -162,6 +165,18 @@ const Dashboard = () => {
             onPlanSelect={(plan) => setFormData({ ...formData, selectedPlan: plan })}
           />
         );
+      case 5:
+        return subscriptionId ? (
+          <PaymentStep
+            subscriptionId={subscriptionId}
+            onSuccess={() => setCurrentStep(currentStep + 1)}
+            onBack={handlePrevious}
+          />
+        ) : (
+          <div className="text-center">
+            <p className="text-red-500">Error loading subscription details</p>
+          </div>
+        );
       default:
         return (
           <div className="text-center">
@@ -183,21 +198,23 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent>
           {renderStep()}
-          <div className="flex justify-between mt-8">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStep === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={handleNext}
-              disabled={currentStep === totalSteps || (currentStep === 4 && !formData.selectedPlan)}
-            >
-              {currentStep === 4 ? 'Continue to Payment' : 'Next'}
-            </Button>
-          </div>
+          {currentStep !== 5 && (
+            <div className="flex justify-between mt-8">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentStep === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={handleNext}
+                disabled={currentStep === totalSteps || (currentStep === 4 && !formData.selectedPlan)}
+              >
+                {currentStep === 4 ? 'Continue to Payment' : 'Next'}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
