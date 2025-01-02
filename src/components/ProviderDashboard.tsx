@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
-import { LogOut } from "lucide-react"
+import { LogOut, Loader, Inbox } from "lucide-react"
 
 interface Review {
   id: string
@@ -33,7 +33,7 @@ const ProviderDashboard = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const { data: reviews, isLoading } = useQuery({
+  const { data: reviews, isLoading, error } = useQuery({
     queryKey: ["provider-reviews"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -114,7 +114,26 @@ const ProviderDashboard = () => {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <div className="text-destructive mb-4">Error loading reviews</div>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["provider-reviews"] })}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -130,55 +149,66 @@ const ProviderDashboard = () => {
           Logout
         </Button>
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Patient Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Submission Date</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {reviews?.map((review) => (
-              <TableRow key={review.id}>
-                <TableCell>
-                  {review.user.profiles.first_name} {review.user.profiles.last_name}
-                </TableCell>
-                <TableCell>{review.approval_status}</TableCell>
-                <TableCell>
-                  {new Date(review.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  {review.approval_status === "Pending" && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() =>
-                          handleStatusUpdate(review.id, "Approved", "Approved by provider")
-                        }
-                        variant="default"
-                        size="sm"
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          handleStatusUpdate(review.id, "Denied", "Denied by provider")
-                        }
-                        variant="destructive"
-                        size="sm"
-                      >
-                        Deny
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
+
+      {reviews && reviews.length > 0 ? (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Patient Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Submission Date</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {reviews.map((review) => (
+                <TableRow key={review.id}>
+                  <TableCell>
+                    {review.user.profiles.first_name} {review.user.profiles.last_name}
+                  </TableCell>
+                  <TableCell>{review.approval_status}</TableCell>
+                  <TableCell>
+                    {new Date(review.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {review.approval_status === "Pending" && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() =>
+                            handleStatusUpdate(review.id, "Approved", "Approved by provider")
+                          }
+                          variant="default"
+                          size="sm"
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            handleStatusUpdate(review.id, "Denied", "Denied by provider")
+                          }
+                          variant="destructive"
+                          size="sm"
+                        >
+                          Deny
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center border rounded-lg bg-muted/10">
+          <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Reviews Yet</h3>
+          <p className="text-muted-foreground">
+            Patient reviews will appear here once they are submitted.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
