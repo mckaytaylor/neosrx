@@ -13,32 +13,57 @@ const ProviderDashboard = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [authChecked, setAuthChecked] = useState(false)
   const [isProvider, setIsProvider] = useState<boolean | null>(null)
 
   useEffect(() => {
+    let mounted = true;
+
     const checkProviderAccess = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        navigate("/provider-login")
-        return
-      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user && mounted) {
+          setIsProvider(false)
+          setAuthChecked(true)
+          navigate("/provider-login", { replace: true })
+          return
+        }
 
-      const isProviderUser = user.app_metadata?.is_provider === true && user.role === 'provider'
-      setIsProvider(isProviderUser)
+        const isProviderUser = user.app_metadata?.is_provider === true && 
+                             user.app_metadata?.role === 'provider'
 
-      if (!isProviderUser) {
-        toast({
-          title: "Unauthorized",
-          description: "You don't have access to the provider dashboard.",
-          variant: "destructive",
-        })
-        navigate("/provider-login")
+        if (mounted) {
+          setIsProvider(isProviderUser)
+          setAuthChecked(true)
+
+          if (!isProviderUser) {
+            toast({
+              title: "Unauthorized",
+              description: "You don't have access to the provider dashboard.",
+              variant: "destructive",
+            })
+            navigate("/provider-login", { replace: true })
+          }
+        }
+      } catch (error) {
+        console.error("Error checking provider access:", error)
+        if (mounted) {
+          setIsProvider(false)
+          setAuthChecked(true)
+          navigate("/provider-login", { replace: true })
+        }
       }
     }
 
-    checkProviderAccess()
-  }, [navigate, toast])
+    if (!authChecked) {
+      checkProviderAccess()
+    }
+
+    return () => {
+      mounted = false
+    }
+  }, [navigate, toast, authChecked])
 
   const fetchReviews = async () => {
     const { data: reviewsData, error: reviewsError } = await supabase
@@ -62,7 +87,7 @@ const ProviderDashboard = () => {
   const { data: reviews, isLoading, error } = useQuery({
     queryKey: ["provider-reviews"],
     queryFn: fetchReviews,
-    enabled: isProvider === true, // Only fetch if user is confirmed as provider
+    enabled: isProvider === true,
   })
 
   const updateReviewStatus = useMutation({
@@ -116,7 +141,7 @@ const ProviderDashboard = () => {
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
       })
-      navigate("/provider-login")
+      navigate("/provider-login", { replace: true })
     } catch (error) {
       console.error("Error logging out:", error)
       toast({
@@ -127,8 +152,8 @@ const ProviderDashboard = () => {
     }
   }
 
-  // Show loading state while checking provider status
-  if (isProvider === null) {
+  // Show loading state while checking auth
+  if (!authChecked) {
     return (
       <div className="container mx-auto py-10">
         <div className="flex justify-center items-center min-h-[400px]">
