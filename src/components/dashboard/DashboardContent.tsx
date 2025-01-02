@@ -74,6 +74,15 @@ export const DashboardContent = ({
     }
   };
 
+  const isShippingComplete = () => {
+    return (
+      formData.shippingAddress?.trim() &&
+      formData.shippingCity?.trim() &&
+      formData.shippingState?.trim() &&
+      formData.shippingZip?.trim()
+    );
+  };
+
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
@@ -97,7 +106,10 @@ export const DashboardContent = ({
           totalSteps={totalSteps}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          isNextDisabled={currentStep === 4 && !formData.selectedPlan}
+          isNextDisabled={
+            (currentStep === 4 && !formData.selectedPlan) ||
+            (currentStep === 5 && !isShippingComplete())
+          }
         />
       </CardContent>
     </Card>

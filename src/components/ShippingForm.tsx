@@ -27,7 +27,7 @@ export const ShippingForm = ({ formData, onChange }: ShippingFormProps) => {
           <Label htmlFor="shippingAddress">Street Address*</Label>
           <Input
             id="shippingAddress"
-            value={formData.shippingAddress}
+            value={formData.shippingAddress || ''}
             onChange={(e) => onChange({ shippingAddress: e.target.value })}
             required
             placeholder="123 Main St"
@@ -39,7 +39,7 @@ export const ShippingForm = ({ formData, onChange }: ShippingFormProps) => {
           <Label htmlFor="shippingCity">City*</Label>
           <Input
             id="shippingCity"
-            value={formData.shippingCity}
+            value={formData.shippingCity || ''}
             onChange={(e) => onChange({ shippingCity: e.target.value })}
             required
             placeholder="San Francisco"
@@ -51,7 +51,7 @@ export const ShippingForm = ({ formData, onChange }: ShippingFormProps) => {
           <Label htmlFor="shippingState">State*</Label>
           <Input
             id="shippingState"
-            value={formData.shippingState}
+            value={formData.shippingState || ''}
             onChange={(e) => onChange({ shippingState: e.target.value })}
             required
             placeholder="CA"
@@ -63,7 +63,7 @@ export const ShippingForm = ({ formData, onChange }: ShippingFormProps) => {
           <Label htmlFor="shippingZip">ZIP Code*</Label>
           <Input
             id="shippingZip"
-            value={formData.shippingZip}
+            value={formData.shippingZip || ''}
             onChange={(e) => onChange({ shippingZip: e.target.value })}
             required
             placeholder="94105"
