@@ -13,6 +13,7 @@ const ProviderLogin = () => {
   // Check for email confirmation success
   const params = new URLSearchParams(window.location.search);
   const confirmationError = params.get('error_description');
+  const confirmationType = params.get('type');
   
   if (confirmationError) {
     toast({
@@ -20,7 +21,7 @@ const ProviderLogin = () => {
       description: decodeURIComponent(confirmationError),
       variant: "destructive",
     });
-  } else if (params.get('type') === 'signup') {
+  } else if (confirmationType === 'signup') {
     toast({
       title: "Success",
       description: "Your email has been confirmed! You can now log in.",
@@ -100,7 +101,7 @@ const ProviderLogin = () => {
             first_name: firstName,
             last_name: lastName
           },
-          emailRedirectTo: window.location.origin + '/provider-login'
+          emailRedirectTo: `${window.location.origin}/provider-login`
         }
       });
 
