@@ -8,9 +8,10 @@ interface AuthFormProps {
   mode: "login" | "register";
   onSubmit: (data: { email: string; password: string; firstName?: string; lastName?: string }) => void;
   onToggleMode: () => void;
+  disabled?: boolean;
 }
 
-export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
+export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -19,6 +20,8 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
     if (!email || !password || (mode === "register" && (!firstName || !lastName))) {
       toast({
         title: "Error",
@@ -27,6 +30,17 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
       });
       return;
     }
+
+    // Validate password length
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
     onSubmit({ email, password, firstName, lastName });
   };
 
@@ -42,6 +56,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="John"
+              disabled={disabled}
             />
           </div>
           <div className="space-y-2">
@@ -52,6 +67,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Doe"
+              disabled={disabled}
             />
           </div>
         </div>
@@ -64,6 +80,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
+          disabled={disabled}
         />
       </div>
       <div className="space-y-2">
@@ -74,9 +91,11 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
+          disabled={disabled}
         />
+        <p className="text-sm text-gray-500">Password must be at least 6 characters long</p>
       </div>
-      <Button type="submit" className="w-full">
+      <Button type="submit" className="w-full" disabled={disabled}>
         {mode === "login" ? "Sign In" : "Create Account"}
       </Button>
       <p className="text-center text-sm text-gray-600">
@@ -85,6 +104,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode }: AuthFormProps) => {
           type="button"
           onClick={onToggleMode}
           className="text-primary hover:underline"
+          disabled={disabled}
         >
           {mode === "login" ? "Sign up" : "Sign in"}
         </button>
