@@ -7,6 +7,7 @@ import { PaymentStep } from "@/components/PaymentStep";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MedicalHistoryForm } from "@/components/MedicalHistoryForm";
+import { BasicInfoForm } from "@/components/BasicInfoForm";
 import { MedicationSelection } from "@/components/MedicationSelection";
 import { Welcome } from "@/components/Welcome";
 import { ConfirmationScreen } from "@/components/ConfirmationScreen";
@@ -21,11 +22,32 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
+  
   const [formData, setFormData] = useState({
-    medicalConditions: "",
-    allergies: "",
-    currentMedications: "",
+    // Basic Info
+    dateOfBirth: "",
+    gender: "",
+    cellPhone: "",
+    // Medical History
+    selectedConditions: [] as string[],
+    otherCondition: "",
+    medullaryThyroidCancer: "",
+    familyMtcHistory: "",
+    men2: "",
+    pregnantOrBreastfeeding: "",
+    weight: "",
+    height: "",
+    exerciseActivity: "",
+    takingMedications: "",
+    medicationsList: "",
+    previousGlp1: "",
+    recentGlp1: "",
+    hasAllergies: "",
+    allergiesList: "",
+    takingBloodThinners: "",
+    // Medication Selection
     selectedMedication: "",
+    // Plan Selection
     selectedPlan: ""
   });
 
@@ -110,10 +132,18 @@ const Dashboard = () => {
     switch (currentStep) {
       case 2:
         return (
-          <MedicalHistoryForm
-            formData={formData}
-            onChange={(data) => setFormData({ ...formData, ...data })}
-          />
+          <>
+            <BasicInfoForm
+              formData={formData}
+              onChange={(data) => setFormData({ ...formData, ...data })}
+            />
+            <div className="mt-8">
+              <MedicalHistoryForm
+                formData={formData}
+                onChange={(data) => setFormData({ ...formData, ...data })}
+              />
+            </div>
+          </>
         );
       case 3:
         return (
