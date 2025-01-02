@@ -18,7 +18,7 @@ const ProviderLogin = () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         const isProvider = session.user.app_metadata?.is_provider === true && 
-                         session.user.role === "provider"
+                         session.user.role === 'provider'
         if (isProvider) {
           navigate("/provider/dashboard")
         }
@@ -31,7 +31,7 @@ const ProviderLogin = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const isProvider = session.user.app_metadata?.is_provider === true && 
-                         session.user.role === "provider"
+                         session.user.role === 'provider'
         if (isProvider) {
           navigate("/provider/dashboard")
         }
@@ -56,8 +56,12 @@ const ProviderLogin = () => {
       if (error) throw error
 
       const user = data.user
+      console.log("User metadata:", user.app_metadata)
+      console.log("User role:", user.role)
+
+      // Check both is_provider flag and role
       const isProvider = user?.app_metadata?.is_provider === true && 
-                        user?.role === "provider"
+                        user?.role === 'provider'
 
       if (!isProvider) {
         await supabase.auth.signOut()
