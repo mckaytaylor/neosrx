@@ -13,38 +13,39 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: assessments, error } = await supabase
+        const { data: assessment, error } = await supabase
           .from('assessments')
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'draft')
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          if (error.code !== 'PGRST116') { // No rows returned
-            console.error('Error loading draft assessment:', error);
-          }
+          console.error('Error loading draft assessment:', error);
           return;
         }
 
-        if (assessments) {
-          setDraftAssessmentId(assessments.id);
+        if (assessment) {
+          console.log('Found draft assessment:', assessment);
+          setDraftAssessmentId(assessment.id);
           // Update form data with saved values
           setFormData({
             ...formData,
-            selectedConditions: assessments.medical_conditions || [],
-            weight: assessments.patient_weight?.toString() || "",
-            heightFeet: Math.floor((assessments.patient_height || 0) / 12).toString(),
-            heightInches: ((assessments.patient_height || 0) % 12).toString(),
-            selectedMedication: assessments.medication || "",
-            selectedPlan: assessments.plan_type || "",
-            shippingAddress: assessments.shipping_address || "",
-            shippingCity: assessments.shipping_city || "",
-            shippingState: assessments.shipping_state || "",
-            shippingZip: assessments.shipping_zip || "",
+            selectedConditions: assessment.medical_conditions || [],
+            weight: assessment.patient_weight?.toString() || "",
+            heightFeet: Math.floor((assessment.patient_height || 0) / 12).toString(),
+            heightInches: ((assessment.patient_height || 0) % 12).toString(),
+            selectedMedication: assessment.medication || "",
+            selectedPlan: assessment.plan_type || "",
+            shippingAddress: assessment.shipping_address || "",
+            shippingCity: assessment.shipping_city || "",
+            shippingState: assessment.shipping_state || "",
+            shippingZip: assessment.shipping_zip || "",
           });
+        } else {
+          console.log('No draft assessment found');
         }
       } catch (error) {
         console.error('Error loading draft assessment:', error);
@@ -74,8 +75,8 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           medical_conditions: formData.selectedConditions || [],
           patient_height: isNaN(height) ? null : height,
           patient_weight: isNaN(weight) ? null : weight,
-          medication: formData.selectedMedication || 'pending',
-          plan_type: formData.selectedPlan || 'pending',
+          medication: formData.selectedMedication || null,
+          plan_type: formData.selectedPlan || null,
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
@@ -91,7 +92,10 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
             .update(assessmentData)
             .eq('id', draftAssessmentId);
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error updating draft:', error);
+            throw error;
+          }
         } else {
           // Create new draft
           const { data, error } = await supabase
@@ -100,8 +104,14 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
             .select()
             .single();
 
-          if (error) throw error;
-          if (data) setDraftAssessmentId(data.id);
+          if (error) {
+            console.error('Error creating draft:', error);
+            throw error;
+          }
+          if (data) {
+            console.log('Created new draft assessment:', data);
+            setDraftAssessmentId(data.id);
+          }
         }
       } catch (error) {
         console.error('Error saving draft assessment:', error);
