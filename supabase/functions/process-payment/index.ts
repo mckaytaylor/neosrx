@@ -50,7 +50,8 @@ serve(async (req) => {
       throw new Error('Missing Authorize.net credentials')
     }
 
-    const authNetEndpoint = 'https://apitest.authorize.net/xml/v1/request.api' // Use test endpoint for now
+    // Use sandbox endpoint
+    const authNetEndpoint = 'https://apitest.authorize.net/xml/v1/request.api'
 
     const paymentRequest = {
       createTransactionRequest: {
