@@ -91,7 +91,7 @@ const ProviderLogin = () => {
       
       console.log("Attempting provider registration...");
       
-      // First sign up the user
+      // First sign up the user with provider metadata
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -114,8 +114,16 @@ const ProviderLogin = () => {
         throw new Error("No user returned after registration");
       }
 
-      // Wait a short moment to ensure the user is created in auth.users
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Sign in immediately after registration to get the proper session
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        console.error("Sign in error after registration:", signInError);
+        throw signInError;
+      }
 
       // Create the profile record
       const { error: profileError } = await supabase
@@ -126,9 +134,7 @@ const ProviderLogin = () => {
             first_name: firstName,
             last_name: lastName,
           }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
@@ -142,6 +148,9 @@ const ProviderLogin = () => {
         description: "Please check your email to verify your account before logging in.",
       });
 
+      // Sign out after successful registration to force email verification
+      await supabase.auth.signOut();
+      
       // Switch back to login mode
       setMode("login");
     } catch (error: any) {
