@@ -83,6 +83,10 @@ export const DashboardContent = ({
     );
   };
 
+  const isMedicationStepComplete = () => {
+    return formData.selectedMedication && formData.selectedPlan;
+  };
+
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
@@ -107,6 +111,7 @@ export const DashboardContent = ({
           onNext={handleNext}
           onPrevious={handlePrevious}
           isNextDisabled={
+            (currentStep === 3 && !isMedicationStepComplete()) ||
             (currentStep === 4 && !formData.selectedPlan) ||
             (currentStep === 5 && !isShippingComplete())
           }
