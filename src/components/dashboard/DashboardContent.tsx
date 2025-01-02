@@ -67,6 +67,36 @@ export const DashboardContent = ({
     }
   };
 
+  const handlePaymentSuccess = async (assessmentId: string) => {
+    try {
+      const { data: assessment, error } = await supabase
+        .from('assessments')
+        .select('*')
+        .eq('id', assessmentId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching assessment:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load order details. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setFormData(prev => ({ ...prev, assessment }));
+      handleNext();
+    } catch (error) {
+      console.error('Error in handlePaymentSuccess:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 2:
@@ -103,7 +133,7 @@ export const DashboardContent = ({
         return formData.assessmentId ? (
           <PaymentStep
             subscriptionId={formData.assessmentId}
-            onSuccess={() => handleNext()}
+            onSuccess={() => handlePaymentSuccess(formData.assessmentId)}
             onBack={handlePrevious}
           />
         ) : (
@@ -112,8 +142,8 @@ export const DashboardContent = ({
           </div>
         );
       case 6:
-        return subscription ? (
-          <ConfirmationScreen subscription={subscription} />
+        return formData.assessment ? (
+          <ConfirmationScreen subscription={formData.assessment} />
         ) : (
           <div className="text-center">
             <p className="text-red-500">Error loading order details</p>
