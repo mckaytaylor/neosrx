@@ -78,6 +78,33 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_reviews: {
+        Row: {
+          approval_status: string | null
+          created_at: string
+          id: string
+          provider_notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approval_status?: string | null
+          created_at?: string
+          id?: string
+          provider_notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approval_status?: string | null
+          created_at?: string
+          id?: string
+          provider_notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

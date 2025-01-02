@@ -1,149 +1,125 @@
-import { useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/integrations/supabase/client"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Review {
-  id: string
-  user_id: string
-  provider_notes: string | null
-  approval_status: "Pending" | "Approved" | "Denied"
-  created_at: string
-  profiles: {
-    first_name: string | null
-    last_name: string | null
-  }
+  id: string;
+  user_id: string;
+  provider_notes: string | null;
+  approval_status: "Pending" | "Approved" | "Denied";
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
 }
 
-const ProviderDashboard = () => {
-  const { toast } = useToast()
-  const queryClient = useQueryClient()
+export const ProviderDashboard = () => {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const { toast } = useToast();
 
-  const { data: reviews, isLoading } = useQuery({
-    queryKey: ["provider-reviews"],
-    queryFn: async () => {
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
       const { data, error } = await supabase
         .from("provider_reviews")
         .select(`
           *,
-          profiles:profiles(first_name, last_name)
+          profiles:user_id(
+            first_name,
+            last_name
+          )
         `)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      if (error) throw error
-      return data as Review[]
-    },
-  })
-
-  const updateReviewStatus = useMutation({
-    mutationFn: async ({
-      reviewId,
-      status,
-      notes,
-    }: {
-      reviewId: string
-      status: "Approved" | "Denied"
-      notes: string
-    }) => {
-      const { error } = await supabase
-        .from("provider_reviews")
-        .update({ approval_status: status, provider_notes: notes })
-        .eq("id", reviewId)
-
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["provider-reviews"] })
-      toast({
-        title: "Review updated",
-        description: "The patient's review status has been updated successfully.",
-      })
-    },
-    onError: (error) => {
-      console.error("Error updating review:", error)
+      if (error) throw error;
+      setReviews(data || []);
+    } catch (error: any) {
+      console.error("Error fetching reviews:", error);
       toast({
         title: "Error",
-        description: "Failed to update the review. Please try again.",
+        description: "Failed to fetch reviews",
         variant: "destructive",
-      })
-    },
-  })
+      });
+    }
+  };
 
-  const handleStatusUpdate = (
-    reviewId: string,
-    status: "Approved" | "Denied",
-    notes: string = ""
-  ) => {
-    updateReviewStatus.mutate({ reviewId, status, notes })
-  }
+  const updateReviewStatus = async (reviewId: string, status: "Approved" | "Denied") => {
+    try {
+      const { error } = await supabase
+        .from("provider_reviews")
+        .update({ approval_status: status })
+        .eq("id", reviewId);
 
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Review ${status.toLowerCase()} successfully`,
+      });
+
+      fetchReviews();
+    } catch (error: any) {
+      console.error("Error updating review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update review status",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Provider Dashboard</h1>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Patient Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Submission Date</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {reviews?.map((review) => (
-              <TableRow key={review.id}>
-                <TableCell>
-                  {review.profiles.first_name} {review.profiles.last_name}
-                </TableCell>
-                <TableCell>{review.approval_status}</TableCell>
-                <TableCell>
-                  {new Date(review.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  {review.approval_status === "Pending" && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() =>
-                          handleStatusUpdate(review.id, "Approved", "Approved by provider")
-                        }
-                        variant="default"
-                        size="sm"
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          handleStatusUpdate(review.id, "Denied", "Denied by provider")
-                        }
-                        variant="destructive"
-                        size="sm"
-                      >
-                        Deny
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Provider Dashboard</h2>
+      <div className="space-y-4">
+        {reviews.map((review) => (
+          <div
+            key={review.id}
+            className="p-4 border rounded-lg bg-white shadow-sm space-y-3"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-semibold">
+                  {review.profiles?.first_name} {review.profiles?.last_name}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Status: {review.approval_status}
+                </p>
+              </div>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateReviewStatus(review.id, "Approved")}
+                  disabled={review.approval_status !== "Pending"}
+                >
+                  Approve
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateReviewStatus(review.id, "Denied")}
+                  disabled={review.approval_status !== "Pending"}
+                >
+                  Deny
+                </Button>
+              </div>
+            </div>
+            {review.provider_notes && (
+              <p className="text-sm text-gray-600">{review.provider_notes}</p>
+            )}
+          </div>
+        ))}
+        {reviews.length === 0 && (
+          <p className="text-center text-gray-500">No reviews to display</p>
+        )}
       </div>
     </div>
-  )
-}
-
-export default ProviderDashboard
+  );
+};
