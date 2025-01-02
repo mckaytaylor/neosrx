@@ -1,30 +1,12 @@
-import { useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
-import { LogOut, Loader, Inbox } from "lucide-react"
-
-interface Review {
-  id: string
-  user_id: string
-  provider_notes: string | null
-  approval_status: "Pending" | "Approved" | "Denied"
-  created_at: string
-  profiles: {
-    first_name: string | null
-    last_name: string | null
-  }
-}
+import { LogOut, Loader } from "lucide-react"
+import { ReviewsTable } from "./provider/ReviewsTable"
+import { EmptyState } from "./provider/EmptyState"
+import { Review } from "./provider/types"
 
 const ProviderDashboard = () => {
   const { toast } = useToast()
@@ -38,7 +20,7 @@ const ProviderDashboard = () => {
         .from("provider_reviews")
         .select(`
           *,
-          profiles!provider_reviews_user_id_fkey (
+          profiles (
             first_name,
             last_name
           )
@@ -46,7 +28,7 @@ const ProviderDashboard = () => {
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      return data as unknown as Review[]
+      return data as Review[]
     },
   })
 
@@ -147,63 +129,9 @@ const ProviderDashboard = () => {
       </div>
 
       {reviews && reviews.length > 0 ? (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Patient Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Submission Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reviews.map((review) => (
-                <TableRow key={review.id}>
-                  <TableCell>
-                    {review.profiles.first_name} {review.profiles.last_name}
-                  </TableCell>
-                  <TableCell>{review.approval_status}</TableCell>
-                  <TableCell>
-                    {new Date(review.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    {review.approval_status === "Pending" && (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() =>
-                            handleStatusUpdate(review.id, "Approved", "Approved by provider")
-                          }
-                          variant="default"
-                          size="sm"
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          onClick={() =>
-                            handleStatusUpdate(review.id, "Denied", "Denied by provider")
-                          }
-                          variant="destructive"
-                          size="sm"
-                        >
-                          Deny
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ReviewsTable reviews={reviews} onUpdateStatus={handleStatusUpdate} />
       ) : (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center border rounded-lg bg-muted/10">
-          <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Reviews Yet</h3>
-          <p className="text-muted-foreground">
-            Patient reviews will appear here once they are submitted.
-          </p>
-        </div>
+        <EmptyState />
       )}
     </div>
   )
