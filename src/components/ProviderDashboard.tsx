@@ -38,7 +38,7 @@ export const ProviderDashboard = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setReviews(data as Review[] || []);
+      setReviews((data as unknown as Review[]) || []);
     } catch (error: any) {
       console.error("Error fetching reviews:", error);
       toast({

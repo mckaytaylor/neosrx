@@ -25,20 +25,56 @@ interface Assessment {
   medical_conditions: string[] | null;
 }
 
+interface FormData {
+  dateOfBirth: string;
+  gender: string;
+  cellPhone: string;
+  selectedConditions: string[];
+  otherCondition: string;
+  medullaryThyroidCancer: string;
+  familyMtcHistory: string;
+  men2: string;
+  pregnantOrBreastfeeding: string;
+  weight: string;
+  heightFeet: string;
+  heightInches: string;
+  exerciseActivity: string;
+  takingMedications: string;
+  medicationsList: string;
+  previousGlp1: string;
+  recentGlp1: string;
+  hasAllergies: string;
+  allergiesList: string;
+  takingBloodThinners: string;
+  selectedMedication?: string;
+  selectedPlan?: string;
+}
+
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isProvider, setIsProvider] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     dateOfBirth: "",
     gender: "",
     cellPhone: "",
-    selectedConditions: [] as string[],
+    selectedConditions: [],
     otherCondition: "",
+    medullaryThyroidCancer: "",
+    familyMtcHistory: "",
+    men2: "",
+    pregnantOrBreastfeeding: "",
     weight: "",
     heightFeet: "",
     heightInches: "",
     exerciseActivity: "",
+    takingMedications: "",
+    medicationsList: "",
+    previousGlp1: "",
+    recentGlp1: "",
+    hasAllergies: "",
+    allergiesList: "",
+    takingBloodThinners: "",
   });
   const navigate = useNavigate();
 
@@ -94,7 +130,7 @@ const Dashboard = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleFormChange = (data: Partial<typeof formData>) => {
+  const handleFormChange = (data: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
   };
 
@@ -120,20 +156,22 @@ const Dashboard = () => {
         )}
         {currentStep === 3 && (
           <MedicationSelection
-            formData={formData}
-            onChange={handleFormChange}
+            selectedMedication={formData.selectedMedication || ""}
+            onMedicationSelect={(medication) => handleFormChange({ selectedMedication: medication })}
           />
         )}
         {currentStep === 4 && (
           <PricingPlans
-            formData={formData}
-            onChange={handleFormChange}
+            selectedMedication={formData.selectedMedication || ""}
+            selectedPlan={formData.selectedPlan || ""}
+            onPlanSelect={(plan) => handleFormChange({ selectedPlan: plan })}
           />
         )}
         {currentStep === 5 && (
           <PaymentStep
-            formData={formData}
-            onChange={handleFormChange}
+            subscriptionId={assessment?.id || ""}
+            onSuccess={handleNext}
+            onBack={handlePrevious}
           />
         )}
         {currentStep === 6 && assessment && (
