@@ -1,9 +1,12 @@
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Stethoscope } from "lucide-react";
+import { HeightInput } from "./HeightInput";
+import { useToast } from "@/hooks/use-toast";
 
 const medicalConditions = [
   "High/Low Blood Pressure",
@@ -47,7 +50,8 @@ interface MedicalHistoryFormData {
   men2: string;
   pregnantOrBreastfeeding: string;
   weight: string;
-  height: string;
+  heightFeet: string;
+  heightInches: string;
   exerciseActivity: string;
   takingMedications: string;
   medicationsList: string;
@@ -64,6 +68,15 @@ interface MedicalHistoryFormProps {
 }
 
 export const MedicalHistoryForm = ({ formData, onChange }: MedicalHistoryFormProps) => {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    toast({
+      title: "Almost there!",
+      description: "This is the only long page, we promise. Almost done!",
+    });
+  }, [toast]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
@@ -153,16 +166,11 @@ export const MedicalHistoryForm = ({ formData, onChange }: MedicalHistoryFormPro
           />
         </div>
 
-        <div>
-          <Label htmlFor="height">Height (ft/in)</Label>
-          <Input
-            id="height"
-            value={formData.height}
-            onChange={(e) => onChange({ height: e.target.value })}
-            placeholder="e.g., 5'10''"
-            className="mt-1"
-          />
-        </div>
+        <HeightInput
+          feet={formData.heightFeet}
+          inches={formData.heightInches}
+          onChange={({ feet, inches }) => onChange({ heightFeet: feet, heightInches: inches })}
+        />
 
         <div>
           <Label>Exercise Activity</Label>
