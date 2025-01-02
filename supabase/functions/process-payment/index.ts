@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { ApiContracts, ApiControllers } from "https://esm.sh/authorizenet@2.0.3"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,11 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Verify request method
-    if (req.method !== 'POST') {
-      throw new Error('Method not allowed')
-    }
-
     // Parse request body
     const { paymentData, subscriptionId } = await req.json()
     if (!paymentData || !subscriptionId) {
@@ -46,44 +41,50 @@ serve(async (req) => {
       throw new Error('Subscription not found')
     }
 
-    // Set up payment request
-    const merchantAuthenticationType = new ApiContracts.MerchantAuthenticationType()
-    merchantAuthenticationType.setName(Deno.env.get('AUTHORIZENET_API_LOGIN_ID'))
-    merchantAuthenticationType.setTransactionKey(Deno.env.get('AUTHORIZENET_TRANSACTION_KEY'))
+    // Process payment using fetch instead of the Authorize.net SDK
+    const authLoginId = Deno.env.get('AUTHORIZENET_API_LOGIN_ID')
+    const transactionKey = Deno.env.get('AUTHORIZENET_TRANSACTION_KEY')
 
-    const creditCard = new ApiContracts.CreditCardType()
-    creditCard.setCardNumber(paymentData.cardNumber)
-    creditCard.setExpirationDate(paymentData.expirationDate)
-    creditCard.setCardCode(paymentData.cardCode)
+    if (!authLoginId || !transactionKey) {
+      throw new Error('Missing Authorize.net credentials')
+    }
 
-    const paymentType = new ApiContracts.PaymentType()
-    paymentType.setCreditCard(creditCard)
+    const authNetEndpoint = 'https://apitest.authorize.net/xml/v1/request.api' // Use test endpoint for now
 
-    const transactionRequestType = new ApiContracts.TransactionRequestType()
-    transactionRequestType.setTransactionType(ApiContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION)
-    transactionRequestType.setPayment(paymentType)
-    transactionRequestType.setAmount(subscription.amount)
-
-    const createRequest = new ApiContracts.CreateTransactionRequest()
-    createRequest.setMerchantAuthentication(merchantAuthenticationType)
-    createRequest.setTransactionRequest(transactionRequestType)
-
-    const ctrl = new ApiControllers.CreateTransactionController(createRequest.getJSON())
-
-    // Process payment
-    const response = await new Promise((resolve, reject) => {
-      ctrl.execute(() => {
-        const apiResponse = ctrl.getResponse()
-        const response = new ApiContracts.CreateTransactionResponse(apiResponse)
-        
-        if (response.getMessages().getResultCode() === ApiContracts.MessageTypeEnum.OK) {
-          resolve(response)
-        } else {
-          const error = response.getMessages().getMessage()[0]
-          reject(new Error(`${error.getCode()}: ${error.getText()}`))
+    const paymentRequest = {
+      createTransactionRequest: {
+        merchantAuthentication: {
+          name: authLoginId,
+          transactionKey: transactionKey
+        },
+        transactionRequest: {
+          transactionType: "authCaptureTransaction",
+          amount: subscription.amount,
+          payment: {
+            creditCard: {
+              cardNumber: paymentData.cardNumber,
+              expirationDate: paymentData.expirationDate,
+              cardCode: paymentData.cardCode
+            }
+          }
         }
-      })
+      }
+    }
+
+    const response = await fetch(authNetEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(paymentRequest)
     })
+
+    const paymentResponse = await response.json()
+    console.log('Payment response:', paymentResponse)
+
+    if (!response.ok) {
+      throw new Error('Payment processing failed')
+    }
 
     // Update subscription status
     const { error: updateError } = await supabase
