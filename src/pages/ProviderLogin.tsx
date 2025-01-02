@@ -2,13 +2,30 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthForm } from "@/components/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 const ProviderLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "register">("login");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check for email confirmation success
+  const params = new URLSearchParams(window.location.search);
+  const confirmationError = params.get('error_description');
+  
+  if (confirmationError) {
+    toast({
+      title: "Error",
+      description: decodeURIComponent(confirmationError),
+      variant: "destructive",
+    });
+  } else if (params.get('type') === 'signup') {
+    toast({
+      title: "Success",
+      description: "Your email has been confirmed! You can now log in.",
+    });
+  }
 
   const handleLogin = async ({ email, password }: { email: string; password: string }) => {
     try {
@@ -82,7 +99,8 @@ const ProviderLogin = () => {
             provider: true,
             first_name: firstName,
             last_name: lastName
-          }
+          },
+          emailRedirectTo: window.location.origin + '/provider-login'
         }
       });
 
