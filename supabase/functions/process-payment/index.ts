@@ -99,7 +99,6 @@ serve(async (req) => {
             marketType: 2,
             deviceType: 1
           },
-          customerIP: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
           userFields: {
             userField: [
               {
