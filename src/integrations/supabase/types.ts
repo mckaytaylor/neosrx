@@ -11,56 +11,104 @@ export type Database = {
     Tables: {
       assessments: {
         Row: {
+          allergies_list: string | null
           amount: number
           assessment_date: string | null
+          cell_phone: string | null
           created_at: string
+          date_of_birth: string | null
+          exercise_activity: string | null
+          family_mtc_history: boolean | null
+          gender: string | null
+          has_allergies: boolean | null
           id: string
           medical_conditions: string[] | null
           medication: string
+          medications_list: string | null
+          medullary_thyroid_cancer: boolean | null
+          men2: boolean | null
+          other_medical_conditions: string | null
           patient_height: number | null
           patient_weight: number | null
           plan_type: string
+          pregnant_or_breastfeeding: boolean | null
+          previous_glp1: boolean | null
+          recent_glp1: boolean | null
           shipping_address: string | null
           shipping_city: string | null
           shipping_state: string | null
           shipping_zip: string | null
           status: string | null
+          taking_blood_thinners: boolean | null
+          taking_medications: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          allergies_list?: string | null
           amount: number
           assessment_date?: string | null
+          cell_phone?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          exercise_activity?: string | null
+          family_mtc_history?: boolean | null
+          gender?: string | null
+          has_allergies?: boolean | null
           id?: string
           medical_conditions?: string[] | null
           medication: string
+          medications_list?: string | null
+          medullary_thyroid_cancer?: boolean | null
+          men2?: boolean | null
+          other_medical_conditions?: string | null
           patient_height?: number | null
           patient_weight?: number | null
           plan_type: string
+          pregnant_or_breastfeeding?: boolean | null
+          previous_glp1?: boolean | null
+          recent_glp1?: boolean | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
           status?: string | null
+          taking_blood_thinners?: boolean | null
+          taking_medications?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          allergies_list?: string | null
           amount?: number
           assessment_date?: string | null
+          cell_phone?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          exercise_activity?: string | null
+          family_mtc_history?: boolean | null
+          gender?: string | null
+          has_allergies?: boolean | null
           id?: string
           medical_conditions?: string[] | null
           medication?: string
+          medications_list?: string | null
+          medullary_thyroid_cancer?: boolean | null
+          men2?: boolean | null
+          other_medical_conditions?: string | null
           patient_height?: number | null
           patient_weight?: number | null
           plan_type?: string
+          pregnant_or_breastfeeding?: boolean | null
+          previous_glp1?: boolean | null
+          recent_glp1?: boolean | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
           status?: string | null
+          taking_blood_thinners?: boolean | null
+          taking_medications?: boolean | null
           updated_at?: string
           user_id?: string
         }
