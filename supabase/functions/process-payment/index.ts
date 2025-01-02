@@ -19,7 +19,7 @@ serve(async (req) => {
       throw new Error('Missing required payment data')
     }
 
-    console.log('Processing payment for subscription:', subscriptionId)
+    console.log('Processing payment for assessment:', subscriptionId)
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -30,15 +30,16 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get subscription details
-    const { data: subscription, error: subscriptionError } = await supabase
-      .from('subscriptions')
+    // Get assessment details
+    const { data: assessment, error: assessmentError } = await supabase
+      .from('assessments')
       .select('*')
       .eq('id', subscriptionId)
       .single()
 
-    if (subscriptionError || !subscription) {
-      throw new Error('Subscription not found')
+    if (assessmentError || !assessment) {
+      console.error('Assessment not found:', assessmentError)
+      throw new Error('Assessment not found')
     }
 
     // Process payment using fetch instead of the Authorize.net SDK
@@ -59,7 +60,7 @@ serve(async (req) => {
         },
         transactionRequest: {
           transactionType: "authCaptureTransaction",
-          amount: subscription.amount,
+          amount: assessment.amount,
           payment: {
             creditCard: {
               cardNumber: paymentData.cardNumber,
@@ -86,17 +87,17 @@ serve(async (req) => {
       throw new Error('Payment processing failed')
     }
 
-    // Update subscription status
+    // Update assessment status
     const { error: updateError } = await supabase
-      .from('subscriptions')
+      .from('assessments')
       .update({ status: 'active' })
       .eq('id', subscriptionId)
 
     if (updateError) {
-      throw new Error('Failed to update subscription status')
+      throw new Error('Failed to update assessment status')
     }
 
-    console.log('Payment processed successfully for subscription:', subscriptionId)
+    console.log('Payment processed successfully for assessment:', subscriptionId)
 
     return new Response(
       JSON.stringify({ success: true }),
