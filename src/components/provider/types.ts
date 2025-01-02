@@ -5,7 +5,7 @@ export interface Review {
   approval_status: "Pending" | "Approved" | "Denied"
   created_at: string
   updated_at: string
-  user: {
+  profiles: {
     first_name: string | null
     last_name: string | null
   } | null
