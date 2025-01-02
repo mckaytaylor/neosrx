@@ -48,11 +48,69 @@ export const DashboardContent = ({
 
       // Update form data with selected medication
       setFormData({ ...formData, selectedMedication: medication });
+      handleNext();
     } catch (error) {
       console.error("Error selecting medication:", error);
       toast({
         title: "Error",
         description: "Failed to select medication. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePlanSelect = async (plan: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Please sign in to continue",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calculate amount based on medication and plan
+      const amounts: Record<string, Record<string, number>> = {
+        tirzepatide: {
+          "1 month": 499,
+          "3 months": 810,
+          "5 months": 1300,
+        },
+        semaglutide: {
+          "1 month": 399,
+          "4 months": 640,
+          "7 months": 1050,
+        },
+      };
+
+      const amount = amounts[formData.selectedMedication.toLowerCase()]?.[plan] || 0;
+
+      // Create the assessment
+      const { data, error } = await supabase
+        .from('assessments')
+        .insert({
+          user_id: user.id,
+          medication: formData.selectedMedication,
+          plan_type: plan,
+          amount: amount,
+          medical_conditions: formData.selectedConditions,
+          patient_height: parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0'),
+          patient_weight: parseInt(formData.weight)
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setFormData({ ...formData, selectedPlan: plan });
+      handleNext();
+    } catch (error: any) {
+      console.error("Error selecting plan:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save assessment. Please try again.",
         variant: "destructive",
       });
     }
@@ -87,7 +145,7 @@ export const DashboardContent = ({
           <PricingPlans
             selectedMedication={formData.selectedMedication}
             selectedPlan={formData.selectedPlan}
-            onPlanSelect={(plan) => setFormData({ ...formData, selectedPlan: plan })}
+            onPlanSelect={handlePlanSelect}
           />
         );
       case 5:
