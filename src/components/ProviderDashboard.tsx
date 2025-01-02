@@ -18,7 +18,13 @@ const ProviderDashboard = () => {
     queryFn: async () => {
       const { data: reviewsData, error: reviewsError } = await supabase
         .from("provider_reviews")
-        .select("*, profiles(first_name, last_name)")
+        .select(`
+          *,
+          profiles!provider_reviews_user_id_fkey(
+            first_name,
+            last_name
+          )
+        `)
         .order("created_at", { ascending: false })
 
       if (reviewsError) throw reviewsError
