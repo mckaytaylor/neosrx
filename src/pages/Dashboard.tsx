@@ -20,8 +20,8 @@ const Dashboard = () => {
   const totalSteps = 6;
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [assessmentId, setAssessmentId] = useState<string | null>(null);
-  const [assessment, setAssessment] = useState<any>(null);
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     // Basic Info
@@ -106,8 +106,8 @@ const Dashboard = () => {
         }).select().single();
 
         if (error) throw error;
-        setAssessmentId(data.id);
-        setAssessment(data);
+        setSubscriptionId(data.id);
+        setSubscription(data);
       } catch (error) {
         toast({
           title: "Error",
@@ -162,9 +162,9 @@ const Dashboard = () => {
           />
         );
       case 5:
-        return assessmentId ? (
+        return subscriptionId ? (
           <PaymentStep
-            assessmentId={assessmentId}
+            subscriptionId={subscriptionId}
             onSuccess={() => setCurrentStep(currentStep + 1)}
             onBack={handlePrevious}
           />
@@ -174,8 +174,10 @@ const Dashboard = () => {
           </div>
         );
       case 6:
-        return assessment ? (
-          <ConfirmationScreen assessment={assessment} />
+        return subscription ? (
+          <ConfirmationScreen
+            subscription={subscription}
+          />
         ) : (
           <div className="text-center">
             <p className="text-red-500">Error loading order details</p>
