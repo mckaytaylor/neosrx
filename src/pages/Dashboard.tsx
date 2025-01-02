@@ -5,16 +5,18 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { PricingPlans } from "@/components/PricingPlans";
 import { PaymentStep } from "@/components/PaymentStep";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { MedicalHistoryForm } from "@/components/MedicalHistoryForm";
 import { MedicationSelection } from "@/components/MedicationSelection";
 import { Welcome } from "@/components/Welcome";
+import { ConfirmationScreen } from "@/components/ConfirmationScreen";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
   const totalSteps = 6;
   const { toast } = useToast();
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
   const [formData, setFormData] = useState({
     medicalConditions: "",
     allergies: "",
@@ -45,6 +47,7 @@ const Dashboard = () => {
 
         if (error) throw error;
         setSubscriptionId(data.id);
+        setSubscription(data);
       } catch (error) {
         toast({
           title: "Error",
@@ -118,6 +121,14 @@ const Dashboard = () => {
             <p className="text-red-500">Error loading subscription details</p>
           </div>
         );
+      case 6:
+        return subscription ? (
+          <ConfirmationScreen subscription={subscription} />
+        ) : (
+          <div className="text-center">
+            <p className="text-red-500">Error loading order details</p>
+          </div>
+        );
       default:
         return <Welcome />;
     }
@@ -128,11 +139,13 @@ const Dashboard = () => {
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Patient Application</CardTitle>
-          <ProgressBar currentStep={currentStep} totalSteps={totalSteps} className="mt-2" />
+          {currentStep < 6 && (
+            <ProgressBar currentStep={currentStep} totalSteps={totalSteps} className="mt-2" />
+          )}
         </CardHeader>
         <CardContent>
           {renderStep()}
-          {currentStep !== 5 && (
+          {currentStep !== 5 && currentStep !== 6 && (
             <div className="flex justify-between mt-8">
               <Button
                 variant="outline"
