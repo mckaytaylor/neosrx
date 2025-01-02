@@ -15,7 +15,8 @@ export const StepsNavigation = ({
   onPrevious,
   isNextDisabled = false,
 }: StepsNavigationProps) => {
-  if (currentStep === 5 || currentStep === 6) return null;
+  // Only hide navigation on payment and confirmation screens (steps 6 and 7)
+  if (currentStep === 6 || currentStep === 7) return null;
 
   return (
     <div className="flex justify-between mt-8">
@@ -30,7 +31,7 @@ export const StepsNavigation = ({
         onClick={onNext}
         disabled={isNextDisabled || currentStep === totalSteps}
       >
-        {currentStep === 4 ? 'Continue to Payment' : 'Next'}
+        {currentStep === 5 ? 'Continue to Payment' : 'Next'}
       </Button>
     </div>
   );
