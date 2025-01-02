@@ -47,10 +47,10 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
       <div className="text-center space-y-4">
         <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
         <h2 className="text-2xl font-bold">
-          Your {capitalizedMedication} Prescription Request is being Reviewed
+          Your {capitalizedMedication} is being reviewed by our provider
         </h2>
         <p className="text-muted-foreground">
-          We're processing your prescription request.
+          It should be on its way to you soon!
         </p>
       </div>
 
