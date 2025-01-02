@@ -14,6 +14,7 @@ import { ConfirmationScreen } from "@/components/ConfirmationScreen";
 import { StepsNavigation } from "@/components/StepsNavigation";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
@@ -22,6 +23,17 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
+
+  // Fetch user data to check if they're a provider
+  const { data: userData } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  const isProvider = userData?.app_metadata?.is_provider;
   
   const [formData, setFormData] = useState({
     // Basic Info
@@ -98,12 +110,16 @@ const Dashboard = () => {
           return;
         }
 
-        const { data, error } = await supabase.from("assessments").insert({
-          user_id: user.id,
-          plan_type: formData.selectedPlan,
-          medication: formData.selectedMedication,
-          amount: getPlanAmount(formData.selectedMedication, formData.selectedPlan),
-        }).select().single();
+        const { data, error } = await supabase
+          .from("assessments")
+          .insert({
+            user_id: user.id,
+            plan_type: formData.selectedPlan,
+            medication: formData.selectedMedication,
+            amount: getPlanAmount(formData.selectedMedication, formData.selectedPlan),
+          })
+          .select()
+          .single();
 
         if (error) throw error;
         setSubscriptionId(data.id);
@@ -187,6 +203,12 @@ const Dashboard = () => {
         return <Welcome />;
     }
   };
+
+  // If user is a provider, redirect them to provider dashboard
+  if (isProvider) {
+    navigate("/provider/dashboard");
+    return null;
+  }
 
   return (
     <div className="container mx-auto p-6">

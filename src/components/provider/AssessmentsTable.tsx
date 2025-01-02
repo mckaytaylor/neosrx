@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Assessment } from "./types"
 import { useState } from "react"
 import { PatientDetailsModal } from "./PatientDetailsModal"
+import { useToast } from "@/hooks/use-toast"
 
 interface AssessmentsTableProps {
   assessments: Assessment[]
@@ -17,6 +18,19 @@ interface AssessmentsTableProps {
 
 export const AssessmentsTable = ({ assessments }: AssessmentsTableProps) => {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  const handlePatientSelect = (userId: string) => {
+    try {
+      setSelectedPatientId(userId)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not load patient details. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   return (
     <>
@@ -32,13 +46,13 @@ export const AssessmentsTable = ({ assessments }: AssessmentsTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assessments.map((assessment) => (
+            {assessments?.map((assessment) => (
               <TableRow key={assessment.id}>
                 <TableCell>
                   <Button
                     variant="link"
                     className="p-0 h-auto font-normal"
-                    onClick={() => setSelectedPatientId(assessment.user_id)}
+                    onClick={() => handlePatientSelect(assessment.user_id)}
                   >
                     {assessment.profiles?.first_name} {assessment.profiles?.last_name}
                   </Button>
