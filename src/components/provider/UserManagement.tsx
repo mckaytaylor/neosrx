@@ -19,9 +19,6 @@ interface Profile {
   last_name: string | null
   provider_role: "admin" | "provider" | null
   email?: string
-  users?: {
-    email: string
-  } | null
 }
 
 export const UserManagement = () => {
@@ -59,15 +56,24 @@ export const UserManagement = () => {
   const { data: profiles } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: profilesData, error } = await supabase
         .from("profiles")
-        .select("*, users:auth.users(email)")
+        .select(`
+          id,
+          first_name,
+          last_name,
+          provider_role,
+          users:auth.users(email)
+        `)
         .order("created_at", { ascending: false })
 
       if (error) throw error
 
-      return (data || []).map(profile => ({
-        ...profile,
+      return (profilesData || []).map(profile => ({
+        id: profile.id,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        provider_role: profile.provider_role,
         email: profile.users?.email
       })) as Profile[]
     },
