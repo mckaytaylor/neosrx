@@ -7,11 +7,38 @@ import { LogOut, Loader } from "lucide-react"
 import { ReviewsTable } from "./provider/ReviewsTable"
 import { EmptyState } from "./provider/EmptyState"
 import { Review } from "./provider/types"
+import { useEffect, useState } from "react"
 
 const ProviderDashboard = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [isProvider, setIsProvider] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const checkProviderAccess = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        navigate("/provider-login")
+        return
+      }
+
+      const isProviderUser = user.app_metadata?.is_provider === true && user.role === 'provider'
+      setIsProvider(isProviderUser)
+
+      if (!isProviderUser) {
+        toast({
+          title: "Unauthorized",
+          description: "You don't have access to the provider dashboard.",
+          variant: "destructive",
+        })
+        navigate("/provider-login")
+      }
+    }
+
+    checkProviderAccess()
+  }, [navigate, toast])
 
   const fetchReviews = async () => {
     const { data: reviewsData, error: reviewsError } = await supabase
@@ -35,6 +62,7 @@ const ProviderDashboard = () => {
   const { data: reviews, isLoading, error } = useQuery({
     queryKey: ["provider-reviews"],
     queryFn: fetchReviews,
+    enabled: isProvider === true, // Only fetch if user is confirmed as provider
   })
 
   const updateReviewStatus = useMutation({
@@ -99,7 +127,8 @@ const ProviderDashboard = () => {
     }
   }
 
-  if (isLoading) {
+  // Show loading state while checking provider status
+  if (isProvider === null) {
     return (
       <div className="container mx-auto py-10">
         <div className="flex justify-center items-center min-h-[400px]">
@@ -109,19 +138,7 @@ const ProviderDashboard = () => {
     )
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <div className="text-destructive mb-4">Error loading reviews</div>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["provider-reviews"] })}>
-            Try Again
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
+  // Always show the logout button and header
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
@@ -136,7 +153,18 @@ const ProviderDashboard = () => {
         </Button>
       </div>
 
-      {reviews && reviews.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[400px]">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <div className="text-destructive mb-4">Error loading reviews</div>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["provider-reviews"] })}>
+            Try Again
+          </Button>
+        </div>
+      ) : reviews && reviews.length > 0 ? (
         <ReviewsTable reviews={reviews} onUpdateStatus={handleStatusUpdate} />
       ) : (
         <EmptyState />
