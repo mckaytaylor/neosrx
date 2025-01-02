@@ -29,6 +29,17 @@ const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isProvider, setIsProvider] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [formData, setFormData] = useState({
+    dateOfBirth: "",
+    gender: "",
+    cellPhone: "",
+    selectedConditions: [] as string[],
+    otherCondition: "",
+    weight: "",
+    heightFeet: "",
+    heightInches: "",
+    exerciseActivity: "",
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,7 +80,6 @@ const Dashboard = () => {
 
     if (data) {
       setAssessment(data);
-      // If assessment exists and is complete, show confirmation screen
       if (data.status === "completed") {
         setCurrentStep(6);
       }
@@ -84,6 +94,10 @@ const Dashboard = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  const handleFormChange = (data: Partial<typeof formData>) => {
+    setFormData(prev => ({ ...prev, ...data }));
+  };
+
   if (isProvider) {
     return <ProviderDashboard />;
   }
@@ -92,12 +106,45 @@ const Dashboard = () => {
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <Welcome />
       <div className="mt-8">
-        {currentStep === 1 && <BasicInfoForm onNext={handleNext} />}
-        {currentStep === 2 && <MedicalHistoryForm onNext={handleNext} />}
-        {currentStep === 3 && <MedicationSelection onNext={handleNext} />}
-        {currentStep === 4 && <PricingPlans onNext={handleNext} />}
-        {currentStep === 5 && <PaymentStep onNext={handleNext} />}
-        {currentStep === 6 && <ConfirmationScreen assessment={assessment} />}
+        {currentStep === 1 && (
+          <BasicInfoForm
+            formData={formData}
+            onChange={handleFormChange}
+          />
+        )}
+        {currentStep === 2 && (
+          <MedicalHistoryForm
+            formData={formData}
+            onChange={handleFormChange}
+          />
+        )}
+        {currentStep === 3 && (
+          <MedicationSelection
+            formData={formData}
+            onChange={handleFormChange}
+          />
+        )}
+        {currentStep === 4 && (
+          <PricingPlans
+            formData={formData}
+            onChange={handleFormChange}
+          />
+        )}
+        {currentStep === 5 && (
+          <PaymentStep
+            formData={formData}
+            onChange={handleFormChange}
+          />
+        )}
+        {currentStep === 6 && assessment && (
+          <ConfirmationScreen
+            subscription={{
+              medication: assessment.medication,
+              plan_type: assessment.plan_type,
+              amount: assessment.amount
+            }}
+          />
+        )}
         <StepsNavigation
           currentStep={currentStep}
           totalSteps={6}
