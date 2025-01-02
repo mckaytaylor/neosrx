@@ -86,7 +86,9 @@ export const PricingPlans = ({
               </div>
             )}
             <CardHeader>
-              <CardTitle className="text-lg">{plan.duration} Plan</CardTitle>
+              <CardTitle className="text-lg">
+                {plan.duration.split(" ")[0]} {parseInt(plan.duration) === 1 ? "month" : "months"} of medication
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
