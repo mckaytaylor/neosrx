@@ -1,12 +1,12 @@
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { LogOut, Loader } from "lucide-react"
-import { ReviewsTable } from "./provider/ReviewsTable"
+import { AssessmentsTable } from "./provider/AssessmentsTable"
 import { EmptyState } from "./provider/EmptyState"
-import { Review } from "./provider/types"
+import { Assessment } from "./provider/types"
 import { useEffect, useState } from "react"
 
 const ProviderDashboard = () => {
@@ -65,72 +65,30 @@ const ProviderDashboard = () => {
     }
   }, [navigate, toast, authChecked])
 
-  const fetchReviews = async () => {
-    const { data: reviewsData, error: reviewsError } = await supabase
-      .from("provider_reviews")
+  const fetchAssessments = async () => {
+    const { data: assessmentsData, error: assessmentsError } = await supabase
+      .from("assessments")
       .select(`
         *,
-        profiles!provider_reviews_user_id_profiles_fk (
+        profiles!assessments_user_id_fkey (
           first_name,
           last_name
         )
       `)
       .order("created_at", { ascending: false })
 
-    if (reviewsError) {
-      console.error("Error fetching reviews:", reviewsError)
-      throw reviewsError
+    if (assessmentsError) {
+      console.error("Error fetching assessments:", assessmentsError)
+      throw assessmentsError
     }
-    return reviewsData as Review[]
+    return assessmentsData as Assessment[]
   }
 
-  const { data: reviews, isLoading, error } = useQuery({
-    queryKey: ["provider-reviews"],
-    queryFn: fetchReviews,
+  const { data: assessments, isLoading, error } = useQuery({
+    queryKey: ["provider-assessments"],
+    queryFn: fetchAssessments,
     enabled: isProvider === true,
   })
-
-  const updateReviewStatus = useMutation({
-    mutationFn: async ({
-      reviewId,
-      status,
-      notes,
-    }: {
-      reviewId: string
-      status: "Approved" | "Denied"
-      notes: string
-    }) => {
-      const { error } = await supabase
-        .from("provider_reviews")
-        .update({ approval_status: status, provider_notes: notes })
-        .eq("id", reviewId)
-
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["provider-reviews"] })
-      toast({
-        title: "Review updated",
-        description: "The patient's review status has been updated successfully.",
-      })
-    },
-    onError: (error) => {
-      console.error("Error updating review:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update the review. Please try again.",
-        variant: "destructive",
-      })
-    },
-  })
-
-  const handleStatusUpdate = (
-    reviewId: string,
-    status: "Approved" | "Denied",
-    notes: string = ""
-  ) => {
-    updateReviewStatus.mutate({ reviewId, status, notes })
-  }
 
   const handleLogout = async () => {
     try {
@@ -184,13 +142,13 @@ const ProviderDashboard = () => {
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <div className="text-destructive mb-4">Error loading reviews</div>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["provider-reviews"] })}>
+          <div className="text-destructive mb-4">Error loading assessments</div>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["provider-assessments"] })}>
             Try Again
           </Button>
         </div>
-      ) : reviews && reviews.length > 0 ? (
-        <ReviewsTable reviews={reviews} onUpdateStatus={handleStatusUpdate} />
+      ) : assessments && assessments.length > 0 ? (
+        <AssessmentsTable assessments={assessments} />
       ) : (
         <EmptyState />
       )}
