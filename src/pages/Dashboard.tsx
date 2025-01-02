@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PricingPlans } from "@/components/PricingPlans";
 import { PaymentStep } from "@/components/PaymentStep";
@@ -10,11 +11,14 @@ import { MedicationSelection } from "@/components/MedicationSelection";
 import { Welcome } from "@/components/Welcome";
 import { ConfirmationScreen } from "@/components/ConfirmationScreen";
 import { StepsNavigation } from "@/components/StepsNavigation";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
   const totalSteps = 6;
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -24,6 +28,23 @@ const Dashboard = () => {
     selectedMedication: "",
     selectedPlan: ""
   });
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Error logging out",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getPlanAmount = (medication: string, plan: string): number => {
     const prices = {
@@ -136,6 +157,16 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto p-6">
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="outline" 
+          onClick={handleLogout}
+          className="gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
+      </div>
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Patient Application</CardTitle>
