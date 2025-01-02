@@ -11,24 +11,30 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          application_status: string | null
           created_at: string
           first_name: string | null
           id: string
           last_name: string | null
+          provider_role: Database["public"]["Enums"]["provider_role"] | null
           updated_at: string
         }
         Insert: {
+          application_status?: string | null
           created_at?: string
           first_name?: string | null
           id: string
           last_name?: string | null
+          provider_role?: Database["public"]["Enums"]["provider_role"] | null
           updated_at?: string
         }
         Update: {
+          application_status?: string | null
           created_at?: string
           first_name?: string | null
           id?: string
           last_name?: string | null
+          provider_role?: Database["public"]["Enums"]["provider_role"] | null
           updated_at?: string
         }
         Relationships: []
@@ -110,6 +116,7 @@ export type Database = {
     }
     Enums: {
       approval_status: "Pending" | "Approved" | "Denied"
+      provider_role: "admin" | "provider"
       user_role: "user" | "provider"
     }
     CompositeTypes: {
