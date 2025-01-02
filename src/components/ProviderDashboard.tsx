@@ -1,4 +1,4 @@
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -79,13 +79,16 @@ const ProviderDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
       })
-      navigate("/")
+      navigate("/provider-login")
     } catch (error) {
+      console.error("Error logging out:", error)
       toast({
         title: "Error logging out",
         description: "There was a problem logging out. Please try again.",
