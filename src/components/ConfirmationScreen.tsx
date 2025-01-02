@@ -27,13 +27,17 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
     }
   }, [toast, subscription]);
 
+  const handleReturnToDashboard = () => {
+    navigate("/dashboard", { state: { showCompletedOrder: true } });
+  };
+
   if (!subscription) {
     return (
       <div className="text-center">
         <p className="text-red-500">Error loading order details. Please contact support if this persists.</p>
         <Button
           variant="link"
-          onClick={() => navigate("/dashboard")}
+          onClick={handleReturnToDashboard}
           className="mt-4"
         >
           Return to Dashboard
@@ -86,7 +90,7 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
       <div className="text-center">
         <Button
           variant="link"
-          onClick={() => navigate("/dashboard")}
+          onClick={handleReturnToDashboard}
         >
           Return to Dashboard
         </Button>
