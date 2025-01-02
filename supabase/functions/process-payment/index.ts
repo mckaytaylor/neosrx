@@ -75,13 +75,16 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
+    // Generate a shorter reference ID (first 20 chars of UUID should be unique enough)
+    const shortRefId = subscriptionId.substring(0, 20);
+
     const paymentRequest = {
       createTransactionRequest: {
         merchantAuthentication: {
           name: authLoginId,
           transactionKey: transactionKey
         },
-        refId: subscriptionId,
+        refId: shortRefId,
         transactionRequest: {
           transactionType: "authCaptureTransaction",
           amount: assessment.amount,
