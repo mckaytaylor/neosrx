@@ -53,7 +53,7 @@ const Dashboard = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching assessment:', error);
@@ -162,10 +162,10 @@ const Dashboard = () => {
             patient_weight: parseInt(formData.weight)
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
-        setSubscriptionId(data.id);
+        setSubscriptionId(data?.id);
         setSubscription(data);
       } catch (error) {
         console.error('Error saving assessment:', error);
