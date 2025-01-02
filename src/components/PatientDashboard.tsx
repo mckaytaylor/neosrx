@@ -16,8 +16,8 @@ import { getPlanAmount } from "@/utils/pricing";
 export const PatientDashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
   const totalSteps = 6;
-  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
-  const [subscription, setSubscription] = useState<any>(null);
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const [assessment, setAssessment] = useState<any>(null);
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     dateOfBirth: "",
@@ -57,20 +57,23 @@ export const PatientDashboard = () => {
           return;
         }
 
-        const { data, error } = await supabase.from("subscriptions").insert({
+        const { data, error } = await supabase.from("assessments").insert({
           user_id: user.id,
           plan_type: formData.selectedPlan,
           medication: formData.selectedMedication,
           amount: getPlanAmount(formData.selectedMedication, formData.selectedPlan),
+          medical_conditions: formData.selectedConditions,
+          patient_weight: parseFloat(formData.weight),
+          patient_height: (parseFloat(formData.heightFeet) * 12) + parseFloat(formData.heightInches),
         }).select().single();
 
         if (error) throw error;
-        setSubscriptionId(data.id);
-        setSubscription(data);
+        setAssessmentId(data.id);
+        setAssessment(data);
       } catch (error) {
         toast({
           title: "Error",
-          description: "Failed to save subscription. Please try again.",
+          description: "Failed to save assessment. Please try again.",
           variant: "destructive",
         });
         return;
@@ -121,20 +124,20 @@ export const PatientDashboard = () => {
           />
         );
       case 5:
-        return subscriptionId ? (
+        return assessmentId ? (
           <PaymentStep
-            subscriptionId={subscriptionId}
+            subscriptionId={assessmentId}
             onSuccess={() => setCurrentStep(currentStep + 1)}
             onBack={handlePrevious}
           />
         ) : (
           <div className="text-center">
-            <p className="text-red-500">Error loading subscription details</p>
+            <p className="text-red-500">Error loading assessment details</p>
           </div>
         );
       case 6:
-        return subscription ? (
-          <ConfirmationScreen subscription={subscription} />
+        return assessment ? (
+          <ConfirmationScreen subscription={assessment} />
         ) : (
           <div className="text-center">
             <p className="text-red-500">Error loading order details</p>
