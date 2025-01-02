@@ -10,6 +10,7 @@ import { ConfirmationScreen } from "@/components/ConfirmationScreen";
 import { StepsNavigation } from "@/components/StepsNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanSelection } from "./PlanSelectionHandler";
 
 interface DashboardContentProps {
   currentStep: number;
@@ -33,6 +34,13 @@ export const DashboardContent = ({
   subscription,
 }: DashboardContentProps) => {
   const { toast } = useToast();
+  const { handlePlanSelect } = usePlanSelection({
+    formData,
+    onSuccess: (plan) => {
+      setFormData({ ...formData, selectedPlan: plan });
+      handleNext();
+    },
+  });
 
   const handleMedicationSelect = async (medication: string) => {
     try {
@@ -53,88 +61,6 @@ export const DashboardContent = ({
       toast({
         title: "Error",
         description: "Failed to select medication. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePlanSelect = async (plan: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "Please sign in to continue",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const amounts: Record<string, Record<string, number>> = {
-        tirzepatide: {
-          "1 month": 499,
-          "3 months": 810,
-          "5 months": 1300,
-        },
-        semaglutide: {
-          "1 month": 399,
-          "4 months": 640,
-          "7 months": 1050,
-        },
-      };
-
-      const medication = formData.selectedMedication.toLowerCase();
-      if (!medication || !amounts[medication]) {
-        toast({
-          title: "Error",
-          description: "Invalid medication selected",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const amount = amounts[medication][plan];
-      if (amount === undefined) {
-        toast({
-          title: "Error",
-          description: "Invalid plan selected",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const medicalConditions = Array.isArray(formData.selectedConditions) 
-        ? formData.selectedConditions 
-        : [];
-
-      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
-      const weight = parseInt(formData.weight);
-
-      const assessmentData = {
-        user_id: user.id,
-        medication: medication,
-        plan_type: plan,
-        amount: amount,
-        medical_conditions: medicalConditions,
-        patient_height: height || null,
-        patient_weight: weight || null
-      };
-
-      const { data, error } = await supabase
-        .from('assessments')
-        .insert(assessmentData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setFormData({ ...formData, selectedPlan: plan });
-      handleNext();
-    } catch (error: any) {
-      console.error("Error selecting plan:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save assessment. Please try again.",
         variant: "destructive",
       });
     }
