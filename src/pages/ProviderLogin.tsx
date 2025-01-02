@@ -114,16 +114,8 @@ const ProviderLogin = () => {
         throw new Error("No user returned after registration");
       }
 
-      // Sign in immediately after registration to get the proper session
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (signInError) {
-        console.error("Sign in error after registration:", signInError);
-        throw signInError;
-      }
+      // Wait for user to be fully created in Supabase
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Create the profile record
       const { error: profileError } = await supabase
