@@ -13,27 +13,47 @@ const ProviderLogin = () => {
     try {
       setIsLoading(true);
       
-      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+      console.log("Attempting provider login...");
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        console.error("Sign in error:", signInError);
+        throw signInError;
+      }
 
-      if (!user) {
+      if (!data.user) {
+        console.error("No user data returned");
         throw new Error("No user returned after login");
       }
+
+      console.log("User signed in successfully:", data.user.id);
+      console.log("User metadata:", data.user.app_metadata);
 
       // Fetch the user's metadata to check if they're a provider
       const { data: { user: userData }, error: userError } = await supabase.auth.getUser();
       
-      if (userError) throw userError;
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+        throw userError;
+      }
+
+      if (!userData) {
+        console.error("No user data found");
+        throw new Error("No user data found");
+      }
+
+      console.log("User role:", userData.app_metadata?.role);
+      console.log("Is provider:", userData.app_metadata?.provider);
 
       // Check if the user has the provider role in their metadata
-      const isProvider = userData?.app_metadata?.role === 'provider';
+      const isProvider = userData.app_metadata?.provider === true;
 
       if (!isProvider) {
         // If not a provider, sign them out and show error
+        console.error("User is not a provider");
         await supabase.auth.signOut();
         throw new Error("Unauthorized access. Provider accounts only.");
       }
@@ -45,9 +65,10 @@ const ProviderLogin = () => {
 
       navigate("/dashboard");
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
       // Sign out if there was an error
