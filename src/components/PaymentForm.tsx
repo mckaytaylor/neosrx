@@ -36,8 +36,49 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     setPaymentData({ ...paymentData, expirationDate: value });
   };
 
+  const validateExpirationDate = (expDate: string): boolean => {
+    const [month, year] = expDate.split('/');
+    if (!month || !year) return false;
+
+    const currentDate = new Date();
+    const expiration = new Date(parseInt(`20${year}`), parseInt(month) - 1);
+    return expiration > currentDate;
+  };
+
+  const getErrorMessage = (error: any): string => {
+    // Check for specific error messages from the payment processor
+    const errorMessage = error?.message?.toLowerCase() || '';
+    
+    if (errorMessage.includes('expired')) {
+      return 'This card has expired. Please use a different card.';
+    }
+    if (errorMessage.includes('declined')) {
+      return 'Your card was declined. Please check your card details or try a different card.';
+    }
+    if (errorMessage.includes('invalid')) {
+      return 'The card information provided is invalid. Please check and try again.';
+    }
+    if (errorMessage.includes('cvv') || errorMessage.includes('security code')) {
+      return 'Invalid security code (CVV). Please check and try again.';
+    }
+    
+    // Default error message
+    return 'There was a problem processing your payment. Please try again.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate expiration date before processing
+    if (!validateExpirationDate(paymentData.expirationDate)) {
+      toast({
+        title: "Invalid Expiration Date",
+        description: "The card expiration date is invalid or the card has expired.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -66,7 +107,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
       console.error('Payment error:', error);
       toast({
         title: "Payment Failed",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
