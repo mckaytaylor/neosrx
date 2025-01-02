@@ -68,6 +68,11 @@ const Index = () => {
           if (signUpError.message.includes('rate_limit')) {
             throw new Error("Please wait 45 seconds before trying again.");
           }
+          // Handle user already exists error
+          if (signUpError.message.includes('user_already_exists')) {
+            setAuthMode("login");
+            throw new Error("This email is already registered. Please try logging in instead.");
+          }
           throw signUpError;
         }
 
