@@ -21,9 +21,12 @@ const ProviderDashboard = () => {
 
     const checkProviderAccess = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
         
+        if (authError) throw authError;
+
         if (!user && mounted) {
+          console.log("No user found, redirecting to login")
           setIsProvider(false)
           setAuthChecked(true)
           navigate("/provider-login", { replace: true })
@@ -34,17 +37,18 @@ const ProviderDashboard = () => {
         console.log("User metadata:", {
           role: user.app_metadata?.role,
           is_provider: user.app_metadata?.is_provider,
-          user_id: user.id
+          user_id: user.id,
+          app_metadata: user.app_metadata
         })
 
-        const isProviderUser = user.app_metadata?.is_provider === true && 
-                             user.app_metadata?.role === 'provider'
+        const isProviderUser = user.app_metadata?.is_provider === true
 
         if (mounted) {
           setIsProvider(isProviderUser)
           setAuthChecked(true)
 
           if (!isProviderUser) {
+            console.log("User is not a provider, redirecting to login")
             toast({
               title: "Unauthorized",
               description: "You don't have access to the provider dashboard.",
@@ -73,6 +77,13 @@ const ProviderDashboard = () => {
   }, [navigate, toast, authChecked])
 
   const fetchAssessments = async () => {
+    console.log("Fetching assessments, isProvider:", isProvider)
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error("No authenticated user")
+    }
+
     // Add debug logging for the query
     const { data: assessmentsData, error: assessmentsError } = await supabase
       .from("assessments")
@@ -98,7 +109,7 @@ const ProviderDashboard = () => {
   const { data: assessments, isLoading, error } = useQuery({
     queryKey: ["provider-assessments"],
     queryFn: fetchAssessments,
-    enabled: isProvider === true,
+    enabled: isProvider === true && authChecked,
   })
 
   const handleLogout = async () => {
