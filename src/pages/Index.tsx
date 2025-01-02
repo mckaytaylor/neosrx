@@ -5,13 +5,27 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerificationAlert, setShowVerificationAlert] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Listen for auth state changes, including email confirmation
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') {
+      toast({
+        title: "Email verified",
+        description: "Your email has been verified. You can now proceed.",
+      });
+      navigate("/dashboard"); // Redirect to dashboard or appropriate page
+    }
+  });
 
   const handleStart = () => {
     setShowAuth(true);
@@ -36,7 +50,6 @@ const Index = () => {
       setIsSubmitting(true);
 
       if (authMode === "register") {
-        // First, sign up the user
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
@@ -68,7 +81,10 @@ const Index = () => {
         if (sessionError) throw sessionError;
         
         if (!sessionData.session) {
-          throw new Error("Session not established. Please try logging in.");
+          // Instead of throwing an error, show the verification alert
+          setUserEmail(data.email);
+          setShowVerificationAlert(true);
+          return;
         }
 
         // Now create the profile with the authenticated session
@@ -136,6 +152,15 @@ const Index = () => {
         ) : (
           <div className="max-w-md mx-auto space-y-8">
             <ProgressBar currentStep={1} totalSteps={7} className="mb-8" />
+            {showVerificationAlert && (
+              <Alert>
+                <AlertDescription className="space-y-3">
+                  <p>We've sent a verification email to <strong>{userEmail}</strong></p>
+                  <p>Please check your inbox and click the verification link to complete your registration. The verification link will redirect you back to the application.</p>
+                  <p>Don't see the email? Check your spam folder or request a new verification email.</p>
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="bg-white p-8 rounded-lg shadow-lg">
               <h2 className="text-2xl font-semibold text-secondary mb-6 text-center">
                 {authMode === "login" ? "Welcome Back" : "Create Your Account"}
