@@ -55,30 +55,38 @@ const Index = () => {
           throw signUpError;
         }
 
-        if (signUpData.user) {
-          // Get the current session to ensure we have authentication
-          const { data: sessionData } = await supabase.auth.getSession();
-          
-          if (sessionData?.session) {
-            // Now create the profile with the authenticated session
-            const { error: profileError } = await supabase
-              .from("profiles")
-              .insert({
-                id: signUpData.user.id,
-                first_name: data.firstName,
-                last_name: data.lastName,
-              });
-
-            if (profileError) throw profileError;
-
-            toast({
-              title: "Account created",
-              description: "Please check your email to verify your account.",
-            });
-          } else {
-            throw new Error("Session not established. Please try logging in.");
-          }
+        if (!signUpData.user) {
+          throw new Error("Failed to create user account.");
         }
+
+        // Wait a moment for the session to be established
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Get the current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+        
+        if (!sessionData.session) {
+          throw new Error("Session not established. Please try logging in.");
+        }
+
+        // Now create the profile with the authenticated session
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: signUpData.user.id,
+            first_name: data.firstName,
+            last_name: data.lastName,
+          });
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: "Account created",
+          description: "Please check your email to verify your account.",
+        });
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: data.email,
@@ -100,7 +108,6 @@ const Index = () => {
         variant: "destructive",
       });
     } finally {
-      // Set a timeout to re-enable the form after 45 seconds
       setTimeout(() => {
         setIsSubmitting(false);
       }, 45000);
