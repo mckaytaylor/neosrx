@@ -8,6 +8,8 @@ import { MedicationSelection } from "@/components/MedicationSelection";
 import { Welcome } from "@/components/Welcome";
 import { ConfirmationScreen } from "@/components/ConfirmationScreen";
 import { StepsNavigation } from "@/components/StepsNavigation";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardContentProps {
   currentStep: number;
@@ -30,6 +32,32 @@ export const DashboardContent = ({
   subscriptionId,
   subscription,
 }: DashboardContentProps) => {
+  const { toast } = useToast();
+
+  const handleMedicationSelect = async (medication: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Please sign in to continue",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update form data with selected medication
+      setFormData({ ...formData, selectedMedication: medication });
+    } catch (error) {
+      console.error("Error selecting medication:", error);
+      toast({
+        title: "Error",
+        description: "Failed to select medication. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 2:
@@ -51,9 +79,7 @@ export const DashboardContent = ({
         return (
           <MedicationSelection
             selectedMedication={formData.selectedMedication}
-            onMedicationSelect={(medication) =>
-              setFormData({ ...formData, selectedMedication: medication })
-            }
+            onMedicationSelect={handleMedicationSelect}
           />
         );
       case 4:
