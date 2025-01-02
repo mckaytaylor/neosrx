@@ -16,7 +16,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           .from('assessments')
           .select('*')
           .eq('user_id', user.id)
-          .eq('status', 'needs_review')
+          .eq('status', 'draft')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -109,7 +109,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
           shipping_zip: formData.shippingZip || null,
-          status: 'needs_review' as const,
+          status: 'draft' as const,
           amount: 0
         };
 

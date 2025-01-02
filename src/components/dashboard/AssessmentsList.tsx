@@ -34,7 +34,7 @@ export const AssessmentsList = () => {
   };
 
   const handleViewAssessment = (assessment: any) => {
-    if (assessment.status === "needs_review") {
+    if (assessment.status === "draft") {
       navigate("/dashboard", { 
         state: { 
           continueAssessment: true, 
@@ -88,7 +88,7 @@ export const AssessmentsList = () => {
                     <span className="text-muted-foreground">Plan:</span>
                     <span className="font-medium">{assessment.plan_type}</span>
                   </div>
-                  {assessment.status === "needs_review" && (
+                  {assessment.status === "draft" && (
                     <Button 
                       variant="outline"
                       onClick={(e) => {
