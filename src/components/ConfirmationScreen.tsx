@@ -16,14 +16,31 @@ interface ConfirmationScreenProps {
 export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const capitalizedMedication = subscription.medication.charAt(0).toUpperCase() + subscription.medication.slice(1);
+  const capitalizedMedication = subscription?.medication?.charAt(0).toUpperCase() + subscription?.medication?.slice(1);
 
   useEffect(() => {
-    toast({
-      title: "Payment Successful",
-      description: "Your order has been confirmed.",
-    });
-  }, [toast]);
+    if (subscription) {
+      toast({
+        title: "Payment Successful",
+        description: "Your order has been confirmed.",
+      });
+    }
+  }, [toast, subscription]);
+
+  if (!subscription) {
+    return (
+      <div className="text-center">
+        <p className="text-red-500">Error loading order details. Please contact support if this persists.</p>
+        <Button
+          variant="link"
+          onClick={() => navigate("/dashboard")}
+          className="mt-4"
+        >
+          Return to Dashboard
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
