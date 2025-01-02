@@ -41,21 +41,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
       return;
     }
 
-    // If we're in register mode and trying to register with an existing email,
-    // suggest logging in instead
-    try {
-      onSubmit({ email, password, firstName, lastName });
-    } catch (error: any) {
-      if (error.message.includes("user_already_exists")) {
-        toast({
-          title: "Account exists",
-          description: "This email is already registered. Please try logging in instead.",
-          variant: "destructive",
-        });
-        // Automatically switch to login mode
-        onToggleMode();
-      }
-    }
+    onSubmit({ email, password, firstName, lastName });
   };
 
   return (
