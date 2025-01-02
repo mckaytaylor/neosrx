@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ProgressBar } from "@/components/ProgressBar";
-import { Form } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, Pill } from "lucide-react";
+import { ProgressBar } from "@/components/ProgressBar";
 import { PricingPlans } from "@/components/PricingPlans";
 import { PaymentStep } from "@/components/PaymentStep";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { MedicalHistoryForm } from "@/components/MedicalHistoryForm";
+import { MedicationSelection } from "@/components/MedicationSelection";
+import { Welcome } from "@/components/Welcome";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
@@ -88,74 +86,17 @@ const Dashboard = () => {
     switch (currentStep) {
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Stethoscope className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-semibold">Medical History</h3>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="medicalConditions">Do you have any pre-existing medical conditions?</Label>
-                <Input
-                  id="medicalConditions"
-                  value={formData.medicalConditions}
-                  onChange={(e) => setFormData({ ...formData, medicalConditions: e.target.value })}
-                  placeholder="List any conditions..."
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="allergies">Do you have any allergies?</Label>
-                <Input
-                  id="allergies"
-                  value={formData.allergies}
-                  onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
-                  placeholder="List any allergies..."
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="currentMedications">Are you currently taking any medications?</Label>
-                <Input
-                  id="currentMedications"
-                  value={formData.currentMedications}
-                  onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })}
-                  placeholder="List current medications..."
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          </div>
+          <MedicalHistoryForm
+            formData={formData}
+            onChange={(data) => setFormData({ ...formData, ...data })}
+          />
         );
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Pill className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-semibold">Medication Selection</h3>
-            </div>
-            <p className="text-muted-foreground mb-4">
-              Please select which medication you are interested in:
-            </p>
-            <RadioGroup
-              value={formData.selectedMedication}
-              onValueChange={(value) => setFormData({ ...formData, selectedMedication: value })}
-              className="space-y-4"
-            >
-              <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted">
-                <RadioGroupItem value="tirzepatide" id="tirzepatide" />
-                <Label htmlFor="tirzepatide" className="flex-1">
-                  <div className="font-medium">Tirzepatide</div>
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted">
-                <RadioGroupItem value="semaglutide" id="semaglutide" />
-                <Label htmlFor="semaglutide" className="flex-1">
-                  <div className="font-medium">Semaglutide</div>
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
+          <MedicationSelection
+            selectedMedication={formData.selectedMedication}
+            onMedicationSelect={(medication) => setFormData({ ...formData, selectedMedication: medication })}
+          />
         );
       case 4:
         return (
@@ -178,14 +119,7 @@ const Dashboard = () => {
           </div>
         );
       default:
-        return (
-          <div className="text-center">
-            <h3 className="text-xl font-semibold mb-4">Welcome to your Dashboard</h3>
-            <p className="text-muted-foreground">
-              Let's continue with your application process.
-            </p>
-          </div>
-        );
+        return <Welcome />;
     }
   };
 
