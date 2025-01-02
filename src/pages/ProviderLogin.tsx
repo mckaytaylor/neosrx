@@ -12,16 +12,24 @@ const ProviderLogin = () => {
 
   // Check for email confirmation success
   const params = new URLSearchParams(window.location.search);
-  const confirmationError = params.get('error_description');
-  const confirmationType = params.get('type');
-  const accessToken = params.get('access_token');
-  
+  const hash = window.location.hash;
+  let accessToken = null;
+  let refreshToken = null;
+  let type = null;
+
+  // Parse the hash fragment
+  if (hash) {
+    const hashParams = new URLSearchParams(hash.substring(1));
+    accessToken = hashParams.get('access_token');
+    refreshToken = hashParams.get('refresh_token');
+    type = hashParams.get('type');
+  }
+
   // Handle automatic login after email confirmation
-  if (accessToken && confirmationType === 'signup') {
-    // Set the session in Supabase
+  if (accessToken && type === 'signup') {
     supabase.auth.setSession({
       access_token: accessToken,
-      refresh_token: params.get('refresh_token') || '',
+      refresh_token: refreshToken || '',
     }).then(() => {
       toast({
         title: "Success",
@@ -35,12 +43,6 @@ const ProviderLogin = () => {
         description: "Failed to set session. Please try logging in manually.",
         variant: "destructive",
       });
-    });
-  } else if (confirmationError) {
-    toast({
-      title: "Error",
-      description: decodeURIComponent(confirmationError),
-      variant: "destructive",
     });
   }
 
