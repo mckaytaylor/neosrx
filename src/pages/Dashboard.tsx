@@ -80,30 +80,24 @@ const Dashboard = () => {
               <Pill className="w-6 h-6 text-primary" />
               <h3 className="text-xl font-semibold">Medication Selection</h3>
             </div>
+            <p className="text-muted-foreground mb-4">
+              Please select which medication you are interested in:
+            </p>
             <RadioGroup
               value={formData.selectedMedication}
               onValueChange={(value) => setFormData({ ...formData, selectedMedication: value })}
               className="space-y-4"
             >
               <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted">
-                <RadioGroupItem value="medication1" id="medication1" />
-                <Label htmlFor="medication1" className="flex-1">
-                  <div className="font-medium">Medication A</div>
-                  <div className="text-sm text-muted-foreground">$50/month</div>
+                <RadioGroupItem value="tirzepatide" id="tirzepatide" />
+                <Label htmlFor="tirzepatide" className="flex-1">
+                  <div className="font-medium">Tirzepatide</div>
                 </Label>
               </div>
               <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted">
-                <RadioGroupItem value="medication2" id="medication2" />
-                <Label htmlFor="medication2" className="flex-1">
-                  <div className="font-medium">Medication B</div>
-                  <div className="text-sm text-muted-foreground">$75/month</div>
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted">
-                <RadioGroupItem value="medication3" id="medication3" />
-                <Label htmlFor="medication3" className="flex-1">
-                  <div className="font-medium">Medication C</div>
-                  <div className="text-sm text-muted-foreground">$100/month</div>
+                <RadioGroupItem value="semaglutide" id="semaglutide" />
+                <Label htmlFor="semaglutide" className="flex-1">
+                  <div className="font-medium">Semaglutide</div>
                 </Label>
               </div>
             </RadioGroup>
