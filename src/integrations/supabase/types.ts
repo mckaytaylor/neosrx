@@ -38,7 +38,7 @@ export type Database = {
           shipping_city: string | null
           shipping_state: string | null
           shipping_zip: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["assessment_status"] | null
           taking_blood_thinners: boolean | null
           taking_medications: boolean | null
           updated_at: string
@@ -72,7 +72,7 @@ export type Database = {
           shipping_city?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["assessment_status"] | null
           taking_blood_thinners?: boolean | null
           taking_medications?: boolean | null
           updated_at?: string
@@ -106,7 +106,7 @@ export type Database = {
           shipping_city?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["assessment_status"] | null
           taking_blood_thinners?: boolean | null
           taking_medications?: boolean | null
           updated_at?: string
@@ -195,6 +195,7 @@ export type Database = {
     }
     Enums: {
       approval_status: "Pending" | "Approved" | "Denied"
+      assessment_status: "needs_review" | "prescribed" | "denied"
       provider_role: "admin" | "provider"
       user_role: "user" | "provider"
     }
