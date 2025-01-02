@@ -10,8 +10,8 @@ export const Hero = ({ onStart, onLogin }: HeroProps) => {
     <div className="text-center space-y-8 py-20">
       <div className="mb-8">
         <img 
-          src="/lovable-uploads/af0fde7e-0cfb-4fb1-83c9-3560868283b1.png" 
-          alt="BelleHealth Logo" 
+          src="/lovable-uploads/88e41391-4d43-49a3-8e4d-40cccf542699.png" 
+          alt="NEOS RX Medical Weight Loss Logo" 
           className="h-16 mx-auto mb-12"
         />
       </div>
