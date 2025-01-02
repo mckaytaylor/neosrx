@@ -11,7 +11,6 @@ const ProviderLogin = () => {
   const { toast } = useToast();
 
   // Check for email confirmation success
-  const params = new URLSearchParams(window.location.search);
   const hash = window.location.hash;
   let accessToken = null;
   let refreshToken = null;
@@ -50,7 +49,7 @@ const ProviderLogin = () => {
     try {
       setIsLoading(true);
       
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -62,16 +61,16 @@ const ProviderLogin = () => {
         throw new Error("Invalid email or password.");
       }
 
-      // After successful login, check if user is a provider
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      if (!signInData.user) {
         throw new Error("No user data found");
       }
 
-      const isProvider = user.app_metadata?.role === 'provider';
+      // Check if the user has the provider role in their metadata
+      const isProvider = signInData.user.user_metadata?.role === 'provider' && 
+                        signInData.user.user_metadata?.provider === true;
       
       if (!isProvider) {
+        // Sign out if not a provider
         await supabase.auth.signOut();
         throw new Error("Unauthorized access. Provider accounts only.");
       }
@@ -89,7 +88,6 @@ const ProviderLogin = () => {
         description: error.message,
         variant: "destructive",
       });
-      await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +115,8 @@ const ProviderLogin = () => {
             role: 'provider',
             provider: true,
             first_name: firstName,
-            last_name: lastName
+            last_name: lastName,
+            email_verified: false
           },
           emailRedirectTo: `${window.location.origin}/provider-login`
         }
@@ -127,6 +126,23 @@ const ProviderLogin = () => {
 
       if (!data.user) {
         throw new Error("Registration failed. Please try again.");
+      }
+
+      // Create a profile entry for the new provider
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: data.user.id,
+            first_name: firstName,
+            last_name: lastName,
+          }
+        ]);
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        // Continue with the registration process even if profile creation fails
+        // The profile can be created later
       }
 
       // Sign out after registration
