@@ -118,7 +118,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      set_provider_metadata: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       approval_status: "Pending" | "Approved" | "Denied"
