@@ -129,13 +129,14 @@ serve(async (req) => {
       throw new Error(errorMessage)
     }
 
-    // Update assessment status
+    // Update assessment status to 'completed' instead of 'active'
     const { error: updateError } = await supabase
       .from('assessments')
-      .update({ status: 'active' })
+      .update({ status: 'completed' })
       .eq('id', subscriptionId)
 
     if (updateError) {
+      console.error('Failed to update assessment status:', updateError)
       throw new Error('Failed to update assessment status')
     }
 
