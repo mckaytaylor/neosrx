@@ -33,6 +33,33 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_reviews: {
+        Row: {
+          approval_status: Database["public"]["Enums"]["approval_status"]
+          created_at: string
+          id: string
+          provider_notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          created_at?: string
+          id?: string
+          provider_notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          created_at?: string
+          id?: string
+          provider_notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           amount: number
@@ -74,7 +101,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      approval_status: "Pending" | "Approved" | "Denied"
     }
     CompositeTypes: {
       [_ in never]: never
