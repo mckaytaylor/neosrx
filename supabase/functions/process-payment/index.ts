@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { ApiContracts, ApiControllers } from "https://esm.sh/authorizenet@2.0.3"
 
 const corsHeaders = {
@@ -14,17 +13,27 @@ serve(async (req) => {
   }
 
   try {
-    const { paymentData, subscriptionId } = await req.json()
-    const authHeader = req.headers.get('Authorization')
-    
-    if (!authHeader) {
-      throw new Error('No authorization header')
+    // Verify request method
+    if (req.method !== 'POST') {
+      throw new Error('Method not allowed')
     }
+
+    // Parse request body
+    const { paymentData, subscriptionId } = await req.json()
+    if (!paymentData || !subscriptionId) {
+      throw new Error('Missing required payment data')
+    }
+
+    console.log('Processing payment for subscription:', subscriptionId)
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const supabase = createClient(supabaseUrl!, supabaseKey!)
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase configuration')
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Get subscription details
     const { data: subscription, error: subscriptionError } = await supabase
@@ -58,8 +67,6 @@ serve(async (req) => {
     const createRequest = new ApiContracts.CreateTransactionRequest()
     createRequest.setMerchantAuthentication(merchantAuthenticationType)
     createRequest.setTransactionRequest(transactionRequestType)
-
-    console.log('Processing payment for subscription:', subscriptionId)
 
     const ctrl = new ApiControllers.CreateTransactionController(createRequest.getJSON())
 
