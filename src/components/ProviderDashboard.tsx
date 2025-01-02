@@ -77,33 +77,39 @@ const ProviderDashboard = () => {
   }, [navigate, toast, authChecked])
 
   const fetchAssessments = async () => {
-    console.log("Fetching assessments, isProvider:", isProvider)
+    console.log("Starting fetchAssessments")
     
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
+      console.error("No authenticated user found")
       throw new Error("No authenticated user")
     }
 
-    // Add debug logging for the query
-    const { data: assessmentsData, error: assessmentsError } = await supabase
-      .from("assessments")
-      .select(`
-        *,
-        profiles!assessments_user_id_profiles_fk (
-          first_name,
-          last_name
-        )
-      `)
-      .order("created_at", { ascending: false })
+    console.log("Fetching assessments for user:", user.id)
 
-    if (assessmentsError) {
-      console.error("Error fetching assessments:", assessmentsError)
-      throw assessmentsError
+    try {
+      const { data, error } = await supabase
+        .from("assessments")
+        .select(`
+          *,
+          profiles:profiles!assessments_user_id_profiles_fk (
+            first_name,
+            last_name
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error("Error fetching assessments:", error)
+        throw error
+      }
+
+      console.log("Successfully fetched assessments:", data)
+      return data as Assessment[]
+    } catch (error) {
+      console.error("Error in fetchAssessments:", error)
+      throw error
     }
-
-    // Add debug logging for the results
-    console.log("Fetched assessments:", assessmentsData)
-    return assessmentsData as Assessment[]
   }
 
   const { data: assessments, isLoading, error } = useQuery({
@@ -132,7 +138,6 @@ const ProviderDashboard = () => {
     }
   }
 
-  // Show loading state while checking auth
   if (!authChecked) {
     return (
       <div className="container mx-auto py-10">
@@ -143,7 +148,6 @@ const ProviderDashboard = () => {
     )
   }
 
-  // Always show the logout button and header
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
