@@ -39,26 +39,28 @@ const medicalConditions = [
   "None of the above"
 ];
 
+interface MedicalHistoryFormData {
+  selectedConditions: string[];
+  otherCondition: string;
+  medullaryThyroidCancer: string;
+  familyMtcHistory: string;
+  men2: string;
+  pregnantOrBreastfeeding: string;
+  weight: string;
+  height: string;
+  exerciseActivity: string;
+  takingMedications: string;
+  medicationsList: string;
+  previousGlp1: string;
+  recentGlp1: string;
+  hasAllergies: string;
+  allergiesList: string;
+  takingBloodThinners: string;
+}
+
 interface MedicalHistoryFormProps {
-  formData: {
-    selectedConditions: string[];
-    otherCondition: string;
-    medullaryThyroidCancer: string;
-    familyMtcHistory: string;
-    men2: string;
-    pregnantOrBreastfeeding: string;
-    weight: string;
-    height: string;
-    exerciseActivity: string;
-    takingMedications: string;
-    medicationsList: string;
-    previousGlp1: string;
-    recentGlp1: string;
-    hasAllergies: string;
-    allergiesList: string;
-    takingBloodThinners: string;
-  };
-  onChange: (data: Partial<typeof MedicalHistoryFormProps['formData']>) => void;
+  formData: MedicalHistoryFormData;
+  onChange: (data: Partial<MedicalHistoryFormData>) => void;
 }
 
 export const MedicalHistoryForm = ({ formData, onChange }: MedicalHistoryFormProps) => {
