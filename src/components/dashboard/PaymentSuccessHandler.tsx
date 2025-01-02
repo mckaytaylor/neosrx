@@ -1,64 +1,44 @@
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface PaymentSuccessHandlerProps {
-  formData: any;
-  onSuccess: (assessment: any) => void;
-}
-
-export const usePaymentSuccess = ({ formData, onSuccess }: PaymentSuccessHandlerProps) => {
+export const PaymentSuccessHandler = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const assessmentId = searchParams.get("assessment_id");
 
-  const handlePaymentSuccess = async (assessmentId: string) => {
-    try {
-      // Update the assessment with shipping information
-      const { error: updateError } = await supabase
-        .from('assessments')
-        .update({
-          shipping_address: formData.shippingAddress,
-          shipping_city: formData.shippingCity,
-          shipping_state: formData.shippingState,
-          shipping_zip: formData.shippingZip,
-          status: 'active'
-        })
-        .eq('id', assessmentId);
+  useEffect(() => {
+    const updateAssessmentStatus = async () => {
+      if (!assessmentId) return;
 
-      if (updateError) {
-        console.error('Error updating shipping info:', updateError);
+      try {
+        const { error } = await supabase
+          .from("assessments")
+          .update({ status: "needs_review" })
+          .eq("id", assessmentId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Payment successful",
+          description: "Your assessment has been submitted for review.",
+        });
+
+        navigate("/dashboard");
+      } catch (error) {
+        console.error("Error updating assessment status:", error);
         toast({
           title: "Error",
-          description: "Failed to save shipping information. Please try again.",
+          description: "Failed to update assessment status. Please contact support.",
           variant: "destructive",
         });
-        return;
       }
+    };
 
-      const { data: assessment, error } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('id', assessmentId)
-        .single();
+    updateAssessmentStatus();
+  }, [assessmentId, navigate, toast]);
 
-      if (error) {
-        console.error('Error fetching assessment:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load order details. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      onSuccess(assessment);
-    } catch (error) {
-      console.error('Error in handlePaymentSuccess:', error);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  return { handlePaymentSuccess };
+  return null;
 };
