@@ -1,20 +1,10 @@
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ProgressBar } from "@/components/ProgressBar";
-import { PricingPlans } from "@/components/PricingPlans";
-import { PaymentStep } from "@/components/PaymentStep";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MedicalHistoryForm } from "@/components/MedicalHistoryForm";
-import { BasicInfoForm } from "@/components/BasicInfoForm";
-import { MedicationSelection } from "@/components/MedicationSelection";
-import { Welcome } from "@/components/Welcome";
-import { ConfirmationScreen } from "@/components/ConfirmationScreen";
-import { StepsNavigation } from "@/components/StepsNavigation";
-import { LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
@@ -33,14 +23,17 @@ const Dashboard = () => {
     },
   });
 
-  const isProvider = userData?.app_metadata?.is_provider;
-  
+  // If user is a provider, redirect them to provider dashboard
+  const isProvider = userData?.app_metadata?.is_provider === true;
+  if (isProvider) {
+    navigate("/provider/dashboard", { replace: true });
+    return null;
+  }
+
   const [formData, setFormData] = useState({
-    // Basic Info
     dateOfBirth: "",
     gender: "",
     cellPhone: "",
-    // Medical History
     selectedConditions: [] as string[],
     otherCondition: "",
     medullaryThyroidCancer: "",
@@ -58,9 +51,7 @@ const Dashboard = () => {
     hasAllergies: "",
     allergiesList: "",
     takingBloodThinners: "",
-    // Medication Selection
     selectedMedication: "",
-    // Plan Selection
     selectedPlan: ""
   });
 
@@ -145,101 +136,19 @@ const Dashboard = () => {
     }
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 2:
-        return (
-          <>
-            <BasicInfoForm
-              formData={formData}
-              onChange={(data) => setFormData({ ...formData, ...data })}
-            />
-            <div className="mt-8">
-              <MedicalHistoryForm
-                formData={formData}
-                onChange={(data) => setFormData({ ...formData, ...data })}
-              />
-            </div>
-          </>
-        );
-      case 3:
-        return (
-          <MedicationSelection
-            selectedMedication={formData.selectedMedication}
-            onMedicationSelect={(medication) => setFormData({ ...formData, selectedMedication: medication })}
-          />
-        );
-      case 4:
-        return (
-          <PricingPlans
-            selectedMedication={formData.selectedMedication}
-            selectedPlan={formData.selectedPlan}
-            onPlanSelect={(plan) => setFormData({ ...formData, selectedPlan: plan })}
-          />
-        );
-      case 5:
-        return subscriptionId ? (
-          <PaymentStep
-            subscriptionId={subscriptionId}
-            onSuccess={() => setCurrentStep(currentStep + 1)}
-            onBack={handlePrevious}
-          />
-        ) : (
-          <div className="text-center">
-            <p className="text-red-500">Error loading assessment details</p>
-          </div>
-        );
-      case 6:
-        return subscription ? (
-          <ConfirmationScreen
-            subscription={subscription}
-          />
-        ) : (
-          <div className="text-center">
-            <p className="text-red-500">Error loading order details</p>
-          </div>
-        );
-      default:
-        return <Welcome />;
-    }
-  };
-
-  // If user is a provider, redirect them to provider dashboard
-  if (isProvider) {
-    navigate("/provider/dashboard");
-    return null;
-  }
-
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-end mb-4">
-        <Button 
-          variant="outline" 
-          onClick={handleLogout}
-          className="gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </Button>
-      </div>
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>Patient Application</CardTitle>
-          {currentStep < 6 && (
-            <ProgressBar currentStep={currentStep} totalSteps={totalSteps} className="mt-2" />
-          )}
-        </CardHeader>
-        <CardContent>
-          {renderStep()}
-          <StepsNavigation
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            isNextDisabled={currentStep === 4 && !formData.selectedPlan}
-          />
-        </CardContent>
-      </Card>
+      <DashboardHeader onLogout={handleLogout} />
+      <DashboardContent
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        formData={formData}
+        setFormData={setFormData}
+        handleNext={handleNext}
+        handlePrevious={handlePrevious}
+        subscriptionId={subscriptionId}
+        subscription={subscription}
+      />
     </div>
   );
 };
