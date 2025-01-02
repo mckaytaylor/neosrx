@@ -9,25 +9,13 @@ interface PaymentSuccessHandlerProps {
 export const usePaymentSuccess = ({ formData, onSuccess }: PaymentSuccessHandlerProps) => {
   const { toast } = useToast();
 
-  const handlePaymentSuccess = async (assessmentId: string) => {
+  const handlePaymentSuccess = async () => {
     try {
-      // Update the assessment with shipping information
-      const { error: updateError } = await supabase
-        .from('assessments')
-        .update({
-          shipping_address: formData.shippingAddress,
-          shipping_city: formData.shippingCity,
-          shipping_state: formData.shippingState,
-          shipping_zip: formData.shippingZip,
-          status: 'active'
-        })
-        .eq('id', assessmentId);
-
-      if (updateError) {
-        console.error('Error updating shipping info:', updateError);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         toast({
           title: "Error",
-          description: "Failed to save shipping information. Please try again.",
+          description: "Please sign in to continue",
           variant: "destructive",
         });
         return;
@@ -35,26 +23,19 @@ export const usePaymentSuccess = ({ formData, onSuccess }: PaymentSuccessHandler
 
       const { data: assessment, error } = await supabase
         .from('assessments')
-        .select('*')
-        .eq('id', assessmentId)
+        .update({ status: "needs_review" })
+        .eq('id', formData.assessmentId)
+        .select()
         .single();
 
-      if (error) {
-        console.error('Error fetching assessment:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load order details. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
 
       onSuccess(assessment);
-    } catch (error) {
-      console.error('Error in handlePaymentSuccess:', error);
+    } catch (error: any) {
+      console.error("Error handling payment success:", error);
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Failed to update assessment status",
         variant: "destructive",
       });
     }
