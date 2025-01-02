@@ -36,9 +36,18 @@ export const UserManagement = () => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single()
+        .maybeSingle()
 
       if (error) throw error
+      if (!data) {
+        toast({
+          title: "Profile not found",
+          description: "Your profile could not be found.",
+          variant: "destructive",
+        })
+        return null
+      }
+      
       setIsAdmin(data.provider_role === "admin")
       return data as Profile
     },
