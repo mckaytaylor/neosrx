@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,7 +23,18 @@ const Index = () => {
     firstName?: string; 
     lastName?: string 
   }) => {
+    if (isSubmitting) {
+      toast({
+        title: "Please wait",
+        description: "You can only make one request every 45 seconds.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
+
       if (authMode === "register") {
         // First, sign up the user
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -36,7 +48,12 @@ const Index = () => {
           }
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          if (signUpError.message.includes('rate_limit')) {
+            throw new Error("Please wait 45 seconds before trying again.");
+          }
+          throw signUpError;
+        }
 
         if (signUpData.user) {
           // Get the current session to ensure we have authentication
@@ -82,6 +99,11 @@ const Index = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      // Set a timeout to re-enable the form after 45 seconds
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 45000);
     }
   };
 
@@ -115,6 +137,7 @@ const Index = () => {
                 mode={authMode}
                 onSubmit={handleAuthSubmit}
                 onToggleMode={() => setAuthMode(authMode === "login" ? "register" : "login")}
+                disabled={isSubmitting}
               />
             </div>
           </div>
