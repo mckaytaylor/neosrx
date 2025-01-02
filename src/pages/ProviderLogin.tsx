@@ -123,14 +123,10 @@ const ProviderLogin = () => {
             first_name: firstName,
             last_name: lastName,
           }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
-        // If profile creation fails, sign out the user
-        await supabase.auth.signOut();
         throw new Error("Failed to create provider profile. Please try again.");
       }
 
@@ -148,8 +144,6 @@ const ProviderLogin = () => {
         description: error.message || "An unexpected error occurred during registration",
         variant: "destructive",
       });
-      // Ensure user is signed out if there was an error
-      await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
     }
