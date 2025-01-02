@@ -1,34 +1,38 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthForm } from "@/components/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 
 const ProviderLogin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  const handleLogin = async ({ email, password }: { email: string; password: string }) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      setIsLoading(true);
+      
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (signInError) throw signInError;
 
-      // Check if the user has provider role
-      const isProvider = data.user?.app_metadata?.provider === true;
+      if (!user) {
+        throw new Error("No user returned after login");
+      }
+
+      // Fetch the user's metadata to check if they're a provider
+      const { data: { user: userData }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) throw userError;
+
+      const isProvider = userData?.app_metadata?.provider === true;
 
       if (!isProvider) {
+        // If not a provider, sign them out and show error
         await supabase.auth.signOut();
         throw new Error("Unauthorized access. Provider accounts only.");
       }
@@ -45,6 +49,8 @@ const ProviderLogin = () => {
         description: error.message,
         variant: "destructive",
       });
+      // Sign out if there was an error
+      await supabase.auth.signOut();
     } finally {
       setIsLoading(false);
     }
@@ -57,33 +63,12 @@ const ProviderLogin = () => {
           <h2 className="text-2xl font-semibold text-[#8BA89F] mb-6 text-center">
             Provider Login
           </h2>
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="provider@example.com"
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={isLoading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
+          <AuthForm
+            mode="login"
+            onSubmit={handleLogin}
+            onToggleMode={() => {}} // Providers can't register through the UI
+            disabled={isLoading}
+          />
         </div>
       </div>
     </div>
