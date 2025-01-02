@@ -75,8 +75,8 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           medical_conditions: formData.selectedConditions || [],
           patient_height: isNaN(height) ? null : height,
           patient_weight: isNaN(weight) ? null : weight,
-          medication: formData.selectedMedication || null,
-          plan_type: formData.selectedPlan || null,
+          medication: formData.selectedMedication || "pending",
+          plan_type: formData.selectedPlan || "pending", // Set default value to "pending"
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
