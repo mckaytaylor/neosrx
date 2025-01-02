@@ -1,4 +1,4 @@
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -13,26 +13,28 @@ const ProviderDashboard = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
+  const fetchReviews = async () => {
+    const { data: reviewsData, error: reviewsError } = await supabase
+      .from("provider_reviews")
+      .select(`
+        *,
+        profiles!provider_reviews_user_id_profiles_fk (
+          first_name,
+          last_name
+        )
+      `)
+      .order("created_at", { ascending: false })
+
+    if (reviewsError) {
+      console.error("Error fetching reviews:", reviewsError)
+      throw reviewsError
+    }
+    return reviewsData as Review[]
+  }
+
   const { data: reviews, isLoading, error } = useQuery({
     queryKey: ["provider-reviews"],
-    queryFn: async () => {
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("provider_reviews")
-        .select(`
-          *,
-          profiles!provider_reviews_user_id_profiles_fk (
-            first_name,
-            last_name
-          )
-        `)
-        .order("created_at", { ascending: false })
-
-      if (reviewsError) {
-        console.error("Error fetching reviews:", reviewsError)
-        throw reviewsError
-      }
-      return reviewsData as Review[]
-    },
+    queryFn: fetchReviews,
   })
 
   const updateReviewStatus = useMutation({
