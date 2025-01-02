@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ProgressBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -24,6 +24,7 @@ const Index = () => {
   }) => {
     try {
       if (authMode === "register") {
+        // First, sign up the user
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
@@ -38,20 +39,28 @@ const Index = () => {
         if (signUpError) throw signUpError;
 
         if (signUpData.user) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert({
-              id: signUpData.user.id,
-              first_name: data.firstName,
-              last_name: data.lastName,
+          // Get the current session to ensure we have authentication
+          const { data: sessionData } = await supabase.auth.getSession();
+          
+          if (sessionData?.session) {
+            // Now create the profile with the authenticated session
+            const { error: profileError } = await supabase
+              .from("profiles")
+              .insert({
+                id: signUpData.user.id,
+                first_name: data.firstName,
+                last_name: data.lastName,
+              });
+
+            if (profileError) throw profileError;
+
+            toast({
+              title: "Account created",
+              description: "Please check your email to verify your account.",
             });
-
-          if (profileError) throw profileError;
-
-          toast({
-            title: "Account created",
-            description: "Please check your email to verify your account.",
-          });
+          } else {
+            throw new Error("Session not established. Please try logging in.");
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
