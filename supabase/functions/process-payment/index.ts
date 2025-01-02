@@ -54,29 +54,11 @@ serve(async (req) => {
     console.log('Using Authorize.net sandbox endpoint')
     const authNetEndpoint = 'https://apitest.authorize.net/xml/v1/request.api'
 
-    // Create authentication signature
-    const timestamp = Math.floor(Date.now() / 1000)
-    const signatureString = `${authLoginId}^${paymentData.cardNumber}^${timestamp}^${assessment.amount}`
-    const encoder = new TextEncoder()
-    const data = encoder.encode(signatureString)
-    const key = encoder.encode(signatureKey)
-    const hmacDigest = await crypto.subtle.importKey(
-      "raw",
-      key,
-      { name: "HMAC", hash: "SHA-512" },
-      false,
-      ["sign"]
-    ).then(key => crypto.subtle.sign(
-      "HMAC",
-      key,
-      data
-    ));
-    const signature = Array.from(new Uint8Array(hmacDigest))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
+    // Format expiration date (remove any non-digit characters and ensure MMYYYY format)
+    const expDate = paymentData.expirationDate.replace(/\D/g, '')
+    
     // Generate a shorter reference ID (first 20 chars of UUID should be unique enough)
-    const shortRefId = subscriptionId.substring(0, 20);
+    const shortRefId = subscriptionId.substring(0, 20)
 
     const paymentRequest = {
       createTransactionRequest: {
@@ -87,29 +69,17 @@ serve(async (req) => {
         refId: shortRefId,
         transactionRequest: {
           transactionType: "authCaptureTransaction",
-          amount: assessment.amount,
+          amount: assessment.amount.toString(),
           payment: {
             creditCard: {
-              cardNumber: paymentData.cardNumber,
-              expirationDate: paymentData.expirationDate,
+              cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
+              expirationDate: expDate,
               cardCode: paymentData.cardCode
             }
           },
           retail: {
             marketType: 2,
             deviceType: 1
-          },
-          userFields: {
-            userField: [
-              {
-                name: "x_signature",
-                value: signature
-              },
-              {
-                name: "x_timestamp",
-                value: timestamp.toString()
-              }
-            ]
           }
         }
       }
@@ -125,13 +95,23 @@ serve(async (req) => {
     })
 
     const paymentResponse = await response.json()
-    console.log('Payment response:', paymentResponse)
+    console.log('Payment response:', JSON.stringify(paymentResponse))
 
-    if (!response.ok || 
-        paymentResponse.messages?.resultCode !== "Ok" || 
-        paymentResponse.transactionResponse?.responseCode !== "1") {
-      console.error('Payment failed:', paymentResponse)
-      throw new Error(paymentResponse.messages?.message?.[0]?.text || 'Payment processing failed')
+    // Check for specific error conditions in the response
+    if (paymentResponse.messages?.resultCode !== "Ok") {
+      const errorMessage = paymentResponse.messages?.message?.[0]?.text || 'Payment processing failed'
+      console.error('Payment error details:', errorMessage)
+      throw new Error(errorMessage)
+    }
+
+    // Verify transaction success
+    if (!paymentResponse.transactionResponse?.responseCode || 
+        paymentResponse.transactionResponse.responseCode !== "1") {
+      const errorCode = paymentResponse.transactionResponse?.responseCode
+      const errorMessage = paymentResponse.transactionResponse?.messages?.[0]?.description || 
+                          'Transaction was not approved'
+      console.error(`Payment failed with code ${errorCode}: ${errorMessage}`)
+      throw new Error(errorMessage)
     }
 
     // Update assessment status
