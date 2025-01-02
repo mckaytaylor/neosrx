@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -19,16 +19,27 @@ const Dashboard = () => {
     queryKey: ['user'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Check if user is a provider
+      const isProvider = user.app_metadata?.is_provider === true;
+      
+      // If on patient dashboard but is a provider, redirect to provider dashboard
+      if (window.location.pathname === "/" && isProvider) {
+        navigate("/provider/dashboard");
+        return null;
+      }
+      
+      // If on provider dashboard but is not a provider, redirect to patient dashboard
+      if (window.location.pathname === "/provider/dashboard" && !isProvider) {
+        navigate("/");
+        return null;
+      }
+
       return user;
     },
+    retry: false
   });
-
-  // If user is a provider, redirect them to provider dashboard
-  const isProvider = userData?.app_metadata?.is_provider === true;
-  if (isProvider) {
-    navigate("/provider/dashboard", { replace: true });
-    return null;
-  }
 
   const [formData, setFormData] = useState({
     dateOfBirth: "",
