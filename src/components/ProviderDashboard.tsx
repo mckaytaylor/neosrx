@@ -58,7 +58,6 @@ const ProviderDashboard = () => {
     }
   }, [navigate, toast, authChecked])
 
-  // Set up real-time subscription for assessment updates
   useEffect(() => {
     const channel = supabase
       .channel('assessment-updates')
@@ -88,7 +87,7 @@ const ProviderDashboard = () => {
 
       const { data, error } = await supabase
         .from("assessments")
-        .select("*, profiles(first_name, last_name)")
+        .select("*, profiles(first_name, last_name, email)")
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -97,13 +96,56 @@ const ProviderDashboard = () => {
     enabled: isProvider === true && authChecked,
   })
 
-  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied" | "completed") => {
-    const { error } = await supabase
-      .from("assessments")
-      .update({ status: newStatus })
-      .eq("id", assessmentId)
+  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied" | "completed", denialReason?: string) => {
+    try {
+      const assessment = assessments?.find(a => a.id === assessmentId)
+      if (!assessment) return
 
-    if (error) throw error
+      const updateData: any = { status: newStatus }
+      if (denialReason) {
+        updateData.denial_reason = denialReason
+      }
+
+      const { error } = await supabase
+        .from("assessments")
+        .update(updateData)
+        .eq("id", assessmentId)
+
+      if (error) throw error
+
+      // Send email notification
+      if (newStatus === "prescribed" || newStatus === "denied") {
+        const { error: emailError } = await supabase.functions.invoke('send-status-email', {
+          body: {
+            to: assessment.profiles?.email,
+            status: newStatus,
+            denialReason: denialReason,
+            medication: assessment.medication
+          }
+        })
+
+        if (emailError) {
+          console.error("Error sending email:", emailError)
+          toast({
+            title: "Warning",
+            description: "Status updated but failed to send email notification",
+            variant: "destructive",
+          })
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: `Assessment has been ${newStatus}`,
+      })
+    } catch (error) {
+      console.error("Error updating status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update assessment status",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleLogout = async () => {

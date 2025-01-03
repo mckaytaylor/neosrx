@@ -17,6 +17,7 @@ export type Database = {
           cell_phone: string | null
           created_at: string
           date_of_birth: string | null
+          denial_reason: string | null
           exercise_activity: string | null
           family_mtc_history: boolean | null
           gender: string | null
@@ -51,6 +52,7 @@ export type Database = {
           cell_phone?: string | null
           created_at?: string
           date_of_birth?: string | null
+          denial_reason?: string | null
           exercise_activity?: string | null
           family_mtc_history?: boolean | null
           gender?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           cell_phone?: string | null
           created_at?: string
           date_of_birth?: string | null
+          denial_reason?: string | null
           exercise_activity?: string | null
           family_mtc_history?: boolean | null
           gender?: string | null

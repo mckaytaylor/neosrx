@@ -11,9 +11,11 @@ export interface Assessment {
   medical_conditions: string[] | null
   created_at: string
   updated_at: string
+  denial_reason: string | null
   profiles?: {
     first_name: string | null
     last_name: string | null
+    email: string | null
   } | null
 }
 
