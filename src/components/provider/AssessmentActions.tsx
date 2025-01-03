@@ -37,13 +37,16 @@ export const AssessmentActions = ({ status, onStatusUpdate }: AssessmentActionsP
   }
 
   const handleReset = async () => {
+    console.log("Reset button clicked, current status:", status)
     try {
       await onStatusUpdate("completed")
+      console.log("Status update completed successfully")
       toast({
         title: "Success",
         description: "Assessment reset to review status",
       })
     } catch (error) {
+      console.error("Reset error:", error)
       toast({
         title: "Error",
         description: "Failed to reset assessment",

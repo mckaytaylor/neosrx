@@ -1,9 +1,11 @@
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { Assessment } from "../types"
+import { useQueryClient } from "@tanstack/react-query"
 
 export const useStatusUpdate = () => {
   const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   const handleStatusUpdate = async (
     assessmentId: string, 
@@ -11,6 +13,8 @@ export const useStatusUpdate = () => {
     denialReason?: string
   ) => {
     try {
+      console.log("Updating status:", { assessmentId, newStatus, denialReason })
+      
       const { data: assessment } = await supabase
         .from("assessments")
         .select("*, profiles(email)")
@@ -31,7 +35,15 @@ export const useStatusUpdate = () => {
         .update(updateData)
         .eq("id", assessmentId)
 
-      if (error) throw error
+      if (error) {
+        console.error("Supabase update error:", error)
+        throw error
+      }
+
+      console.log("Status updated successfully")
+
+      // Invalidate and refetch queries to update UI
+      await queryClient.invalidateQueries({ queryKey: ["provider-assessments"] })
 
       if ((newStatus === "prescribed" || newStatus === "denied") && assessment.profiles?.email) {
         console.log('Sending email to:', assessment.profiles.email)
@@ -54,8 +66,6 @@ export const useStatusUpdate = () => {
         } else {
           console.log('Email sent successfully')
         }
-      } else {
-        console.log('No email found for user or status does not require email notification')
       }
 
       toast({
@@ -69,6 +79,7 @@ export const useStatusUpdate = () => {
         description: "Failed to update assessment status",
         variant: "destructive",
       })
+      throw error
     }
   }
 
