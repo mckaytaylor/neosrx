@@ -36,6 +36,22 @@ export const AssessmentActions = ({ status, onStatusUpdate }: AssessmentActionsP
     setDenialReason("")
   }
 
+  const handleReset = async () => {
+    try {
+      await onStatusUpdate("completed")
+      toast({
+        title: "Success",
+        description: "Assessment reset to review status",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reset assessment",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (status === "completed") {
     return (
       <>
@@ -93,7 +109,7 @@ export const AssessmentActions = ({ status, onStatusUpdate }: AssessmentActionsP
         size="sm"
         variant="outline"
         className="gap-1"
-        onClick={() => onStatusUpdate("completed")}
+        onClick={handleReset}
       >
         <RotateCcw className="h-4 w-4" />
         Reset to Review
