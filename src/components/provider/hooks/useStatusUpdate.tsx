@@ -15,14 +15,20 @@ export const useStatusUpdate = () => {
     try {
       console.log("Starting status update:", { assessmentId, newStatus, denialReason })
       
-      const { data: assessment } = await supabase
+      const { data: assessment, error: fetchError } = await supabase
         .from("assessments")
         .select("*, profiles(email)")
         .eq("id", assessmentId)
-        .single()
+        .maybeSingle()
+
+      if (fetchError) {
+        console.error("Error fetching assessment:", fetchError)
+        throw new Error("Failed to fetch assessment")
+      }
 
       if (!assessment) {
-        throw new Error("Assessment not found")
+        console.error("Assessment not found with ID:", assessmentId)
+        throw new Error("Assessment not found or no longer exists")
       }
 
       console.log("Found assessment:", assessment)
@@ -34,14 +40,14 @@ export const useStatusUpdate = () => {
 
       console.log("Updating assessment with data:", updateData)
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("assessments")
         .update(updateData)
         .eq("id", assessmentId)
 
-      if (error) {
-        console.error("Supabase update error:", error)
-        throw error
+      if (updateError) {
+        console.error("Supabase update error:", updateError)
+        throw updateError
       }
 
       console.log("Status updated successfully")
@@ -76,11 +82,11 @@ export const useStatusUpdate = () => {
         title: "Success",
         description: `Assessment has been ${newStatus}`,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating status:", error)
       toast({
         title: "Error",
-        description: "Failed to update assessment status",
+        description: error.message || "Failed to update assessment status",
         variant: "destructive",
       })
       throw error
