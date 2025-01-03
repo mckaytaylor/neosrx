@@ -11,12 +11,12 @@ import { Assessment } from "./types"
 import { useState } from "react"
 import { PatientDetailsModal } from "./PatientDetailsModal"
 import { useToast } from "@/hooks/use-toast"
-import { Check, X } from "lucide-react"
+import { AssessmentActions } from "./AssessmentActions"
 
 interface AssessmentsTableProps {
   assessments: Assessment[]
   showActions?: boolean
-  onStatusUpdate?: (assessmentId: string, newStatus: "prescribed" | "denied") => Promise<void>
+  onStatusUpdate?: (assessmentId: string, newStatus: "prescribed" | "denied" | "completed") => Promise<void>
 }
 
 export const AssessmentsTable = ({ 
@@ -39,7 +39,7 @@ export const AssessmentsTable = ({
     }
   }
 
-  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied") => {
+  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied" | "completed") => {
     try {
       if (onStatusUpdate) {
         await onStatusUpdate(assessmentId, newStatus)
@@ -93,25 +93,10 @@ export const AssessmentsTable = ({
                 </TableCell>
                 {showActions && (
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => handleStatusUpdate(assessment.id, "prescribed")}
-                      >
-                        <Check className="h-4 w-4" />
-                        Prescribe
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="gap-1"
-                        onClick={() => handleStatusUpdate(assessment.id, "denied")}
-                      >
-                        <X className="h-4 w-4" />
-                        Deny
-                      </Button>
-                    </div>
+                    <AssessmentActions 
+                      status={assessment.status}
+                      onStatusUpdate={(newStatus) => handleStatusUpdate(assessment.id, newStatus)}
+                    />
                   </TableCell>
                 )}
               </TableRow>

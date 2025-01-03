@@ -17,15 +17,13 @@ const ProviderDashboard = () => {
   const [isProvider, setIsProvider] = useState<boolean | null>(null)
 
   useEffect(() => {
-    let mounted = true;
-
     const checkProviderAccess = async () => {
       try {
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         
         if (authError) throw authError;
 
-        if (!user && mounted) {
+        if (!user) {
           console.log("No user found, redirecting to login")
           setIsProvider(false)
           setAuthChecked(true)
@@ -33,45 +31,30 @@ const ProviderDashboard = () => {
           return
         }
 
-        console.log("User metadata:", {
-          role: user.app_metadata?.role,
-          is_provider: user.app_metadata?.is_provider,
-          user_id: user.id,
-          app_metadata: user.app_metadata
-        })
-
         const isProviderUser = user.app_metadata?.is_provider === true
 
-        if (mounted) {
-          setIsProvider(isProviderUser)
-          setAuthChecked(true)
-
-          if (!isProviderUser) {
-            console.log("User is not a provider, redirecting to login")
-            toast({
-              title: "Unauthorized",
-              description: "You don't have access to the provider dashboard.",
-              variant: "destructive",
-            })
-            navigate("/provider-login", { replace: true })
-          }
-        }
-      } catch (error) {
-        console.error("Error checking provider access:", error)
-        if (mounted) {
-          setIsProvider(false)
-          setAuthChecked(true)
+        if (!isProviderUser) {
+          console.log("User is not a provider, redirecting to login")
+          toast({
+            title: "Unauthorized",
+            description: "You don't have access to the provider dashboard.",
+            variant: "destructive",
+          })
           navigate("/provider-login", { replace: true })
         }
+
+        setIsProvider(isProviderUser)
+        setAuthChecked(true)
+      } catch (error) {
+        console.error("Error checking provider access:", error)
+        setIsProvider(false)
+        setAuthChecked(true)
+        navigate("/provider-login", { replace: true })
       }
     }
 
     if (!authChecked) {
       checkProviderAccess()
-    }
-
-    return () => {
-      mounted = false
     }
   }, [navigate, toast, authChecked])
 
@@ -87,7 +70,6 @@ const ProviderDashboard = () => {
           table: 'assessments'
         },
         () => {
-          // Refetch assessments when any changes occur
           queryClient.invalidateQueries({ queryKey: ["provider-assessments"] })
         }
       )
@@ -98,37 +80,24 @@ const ProviderDashboard = () => {
     }
   }, [queryClient])
 
-  const fetchAssessments = async () => {
-    console.log("Starting fetchAssessments")
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      console.error("No authenticated user found")
-      throw new Error("No authenticated user")
-    }
+  const { data: assessments, isLoading, error } = useQuery({
+    queryKey: ["provider-assessments"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("No authenticated user")
 
-    console.log("Fetching assessments for user:", user.id)
-
-    try {
       const { data, error } = await supabase
         .from("assessments")
         .select("*, profiles(first_name, last_name)")
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error("Error fetching assessments:", error)
-        throw error
-      }
-
-      console.log("Successfully fetched assessments:", data)
+      if (error) throw error
       return data as Assessment[]
-    } catch (error) {
-      console.error("Error in fetchAssessments:", error)
-      throw error
-    }
-  }
+    },
+    enabled: isProvider === true && authChecked,
+  })
 
-  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied") => {
+  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied" | "completed") => {
     const { error } = await supabase
       .from("assessments")
       .update({ status: newStatus })
@@ -136,12 +105,6 @@ const ProviderDashboard = () => {
 
     if (error) throw error
   }
-
-  const { data: assessments, isLoading, error } = useQuery({
-    queryKey: ["provider-assessments"],
-    queryFn: fetchAssessments,
-    enabled: isProvider === true && authChecked,
-  })
 
   const handleLogout = async () => {
     try {
