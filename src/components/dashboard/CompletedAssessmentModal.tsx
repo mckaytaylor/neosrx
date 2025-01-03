@@ -26,6 +26,20 @@ export const CompletedAssessmentModal = ({
         </DialogHeader>
         <ScrollArea className="max-h-[80vh]">
           <div className="space-y-6 p-2">
+            {/* Contact Information */}
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <h3 className="font-semibold text-lg">Contact Information</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-muted-foreground">Email:</span>
+                  <span>{assessment.profiles?.email || 'Not provided'}</span>
+                  
+                  <span className="text-muted-foreground">Phone:</span>
+                  <span>{assessment.cell_phone || 'Not provided'}</span>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Order Summary */}
             <Card>
               <CardContent className="pt-6 space-y-4">
