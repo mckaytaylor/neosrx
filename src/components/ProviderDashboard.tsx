@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { LogOut, Loader } from "lucide-react"
-import { AssessmentsTable } from "./provider/AssessmentsTable"
 import { EmptyState } from "./provider/EmptyState"
 import { Assessment } from "./provider/types"
 import { useEffect, useState } from "react"
+import { StatusTabs } from "./provider/StatusTabs"
 
 const ProviderDashboard = () => {
   const { toast } = useToast()
@@ -75,6 +75,29 @@ const ProviderDashboard = () => {
     }
   }, [navigate, toast, authChecked])
 
+  // Set up real-time subscription for assessment updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('assessment-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'assessments'
+        },
+        () => {
+          // Refetch assessments when any changes occur
+          queryClient.invalidateQueries({ queryKey: ["provider-assessments"] })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [queryClient])
+
   const fetchAssessments = async () => {
     console.log("Starting fetchAssessments")
     
@@ -103,6 +126,15 @@ const ProviderDashboard = () => {
       console.error("Error in fetchAssessments:", error)
       throw error
     }
+  }
+
+  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied") => {
+    const { error } = await supabase
+      .from("assessments")
+      .update({ status: newStatus })
+      .eq("id", assessmentId)
+
+    if (error) throw error
   }
 
   const { data: assessments, isLoading, error } = useQuery({
@@ -167,7 +199,10 @@ const ProviderDashboard = () => {
           </Button>
         </div>
       ) : assessments && assessments.length > 0 ? (
-        <AssessmentsTable assessments={assessments} />
+        <StatusTabs 
+          assessments={assessments} 
+          onStatusUpdate={handleStatusUpdate}
+        />
       ) : (
         <EmptyState />
       )}
