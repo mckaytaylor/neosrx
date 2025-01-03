@@ -33,9 +33,9 @@ export const useStatusUpdate = () => {
 
       console.log("Found assessment:", assessment)
 
-      const updateData: any = { status: newStatus }
-      if (denialReason) {
-        updateData.denial_reason = denialReason
+      const updateData: any = { 
+        status: newStatus,
+        denial_reason: newStatus === "completed" ? null : (denialReason || assessment.denial_reason)
       }
 
       console.log("Updating assessment with data:", updateData)
