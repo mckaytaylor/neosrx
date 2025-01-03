@@ -114,10 +114,11 @@ const ProviderDashboard = () => {
       if (error) throw error
 
       // Send email notification
-      if (newStatus === "prescribed" || newStatus === "denied") {
+      if ((newStatus === "prescribed" || newStatus === "denied") && assessment.profiles?.email) {
+        console.log('Sending email to:', assessment.profiles.email);
         const { error: emailError } = await supabase.functions.invoke('send-status-email', {
           body: {
-            to: assessment.profiles?.email,
+            to: assessment.profiles.email,
             status: newStatus,
             denialReason: denialReason,
             medication: assessment.medication

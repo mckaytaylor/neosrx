@@ -22,6 +22,10 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { to, status, denialReason, medication }: EmailRequest = await req.json();
     
+    if (!to || typeof to !== 'string') {
+      throw new Error('Invalid email address provided');
+    }
+    
     const capitalizedMedication = medication.charAt(0).toUpperCase() + medication.slice(1);
     let subject, html;
 
@@ -44,6 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     }
 
+    console.log('Sending email to:', to);
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -52,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "NEOS RX <no-reply@mybellehealth.com>",
-        to: [to],
+        to,
         subject,
         html,
       }),
@@ -60,6 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!res.ok) {
       const error = await res.text();
+      console.error('Resend API error:', error);
       throw new Error(`Failed to send email: ${error}`);
     }
 
