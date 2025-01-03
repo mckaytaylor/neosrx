@@ -7,9 +7,8 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    // Set up realtime subscription
     const channel = supabase
-      .channel('assessment-updates')
+      .channel('assessment-changes')
       .on(
         'postgres_changes',
         {
@@ -19,12 +18,16 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
         },
         (payload) => {
           console.log('Realtime update received:', payload)
+          // Immediately invalidate the query to trigger a refetch
           queryClient.invalidateQueries({ queryKey: ["provider-assessments"] })
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status)
+      })
 
     return () => {
+      console.log('Cleaning up realtime subscription')
       supabase.removeChannel(channel)
     }
   }, [queryClient])
@@ -40,7 +43,12 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
         .select("*, profiles(first_name, last_name, email)")
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching assessments:', error)
+        throw error
+      }
+      
+      console.log('Fetched assessments:', data)
       return data as Assessment[]
     },
     enabled: isProvider === true && authChecked,
