@@ -85,7 +85,16 @@ export const AssessmentsTable = ({
                 </TableCell>
                 <TableCell>{assessment.plan_type}</TableCell>
                 <TableCell>{assessment.medication}</TableCell>
-                <TableCell className="capitalize">{assessment.status}</TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="capitalize">{assessment.status}</div>
+                    {assessment.status === "denied" && assessment.denial_reason && (
+                      <div className="text-sm text-muted-foreground">
+                        Reason: {assessment.denial_reason}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   {assessment.created_at
                     ? new Date(assessment.created_at).toLocaleDateString()
