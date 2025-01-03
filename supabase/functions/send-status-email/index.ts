@@ -23,6 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { to, status, denialReason, medication }: EmailRequest = await req.json();
     
     if (!to || typeof to !== 'string') {
+      console.error('Invalid email address provided:', to);
       throw new Error('Invalid email address provided');
     }
     
@@ -70,6 +71,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const data = await res.json();
+    console.log('Email sent successfully:', data);
+    
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

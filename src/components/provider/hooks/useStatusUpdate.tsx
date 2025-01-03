@@ -33,7 +33,7 @@ export const useStatusUpdate = () => {
 
       if (error) throw error
 
-      // Send email notification
+      // Send email notification if we have an email and the status is prescribed or denied
       if ((newStatus === "prescribed" || newStatus === "denied") && assessment.profiles?.email) {
         console.log('Sending email to:', assessment.profiles.email)
         const { error: emailError } = await supabase.functions.invoke('send-status-email', {
@@ -55,6 +55,8 @@ export const useStatusUpdate = () => {
         } else {
           console.log('Email sent successfully')
         }
+      } else {
+        console.log('No email found for user or status does not require email notification')
       }
 
       toast({

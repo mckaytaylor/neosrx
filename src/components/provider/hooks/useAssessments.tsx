@@ -7,6 +7,7 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
   const queryClient = useQueryClient()
 
   useEffect(() => {
+    console.log('Setting up realtime subscription')
     const channel = supabase
       .channel('assessment-changes')
       .on(
@@ -18,7 +19,7 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
         },
         (payload) => {
           console.log('Realtime update received:', payload)
-          // Immediately invalidate the query to trigger a refetch
+          // Immediately invalidate and refetch the query
           queryClient.invalidateQueries({ queryKey: ["provider-assessments"] })
         }
       )
