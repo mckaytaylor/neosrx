@@ -39,6 +39,7 @@ export const AssessmentActions = ({ status, onStatusUpdate }: AssessmentActionsP
   const handleReset = async () => {
     console.log("Reset button clicked, current status:", status)
     try {
+      console.log("Attempting to update status to completed")
       await onStatusUpdate("completed")
       console.log("Status update completed successfully")
       toast({

@@ -13,7 +13,7 @@ export const useStatusUpdate = () => {
     denialReason?: string
   ) => {
     try {
-      console.log("Updating status:", { assessmentId, newStatus, denialReason })
+      console.log("Starting status update:", { assessmentId, newStatus, denialReason })
       
       const { data: assessment } = await supabase
         .from("assessments")
@@ -25,10 +25,14 @@ export const useStatusUpdate = () => {
         throw new Error("Assessment not found")
       }
 
+      console.log("Found assessment:", assessment)
+
       const updateData: any = { status: newStatus }
       if (denialReason) {
         updateData.denial_reason = denialReason
       }
+
+      console.log("Updating assessment with data:", updateData)
 
       const { error } = await supabase
         .from("assessments")
