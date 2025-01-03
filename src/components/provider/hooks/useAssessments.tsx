@@ -19,7 +19,6 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
         },
         (payload) => {
           console.log('Realtime update received:', payload)
-          // Immediately invalidate and refetch the query
           queryClient.invalidateQueries({ queryKey: ["provider-assessments"] })
         }
       )
