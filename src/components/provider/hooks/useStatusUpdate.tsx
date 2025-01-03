@@ -39,7 +39,7 @@ export const useStatusUpdate = () => {
           body: {
             to: assessment.profiles.email,
             status: newStatus,
-            denialReason: denialReason,
+            denialReason: denialReason || "No reason provided",
             medication: assessment.medication
           }
         })
