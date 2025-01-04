@@ -12,24 +12,26 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
   const calculateAmount = (medication: string, plan: string): number | null => {
     const amounts: Record<string, Record<string, number>> = {
       tirzepatide: {
-        "1 month": 499,
-        "3 months": 810,
-        "5 months": 1300,
+        "1_month": 499,
+        "3_months": 810,
+        "5_months": 1300,
       },
       semaglutide: {
-        "1 month": 399,
-        "4 months": 640,
-        "7 months": 1050,
+        "1_month": 399,
+        "4_months": 640,
+        "7_months": 1050,
       },
     };
 
-    if (!medication || !amounts[medication] || !amounts[medication][plan]) {
-      console.error('Invalid amount calculation:', { medication, plan });
+    const formattedPlan = plan.toLowerCase().replace(/\s+/g, '_');
+    
+    if (!medication || !amounts[medication] || !amounts[medication][formattedPlan]) {
+      console.error('Invalid amount calculation:', { medication, plan, formattedPlan });
       return null;
     }
 
-    const calculatedAmount = amounts[medication][plan];
-    console.log('Calculated amount:', { medication, plan, amount: calculatedAmount });
+    const calculatedAmount = amounts[medication][formattedPlan];
+    console.log('Calculated amount:', { medication, plan: formattedPlan, amount: calculatedAmount });
     return calculatedAmount;
   };
 
@@ -44,6 +46,9 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         });
         return;
       }
+
+      const formattedPlan = plan.toLowerCase().replace(/\s+/g, '_');
+      console.log('Formatted plan:', formattedPlan);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -65,7 +70,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const amount = calculateAmount(medication, plan);
+      const amount = calculateAmount(medication, formattedPlan);
       if (!amount) {
         toast({
           title: "Error",
@@ -93,7 +98,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       const assessmentData = {
         user_id: user.id,
         medication: medication,
-        plan_type: plan,
+        plan_type: formattedPlan, // Using the formatted plan type
         amount: amount,
         medical_conditions: medicalConditions,
         patient_height: isNaN(height) ? null : height,
@@ -138,7 +143,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       }
 
       console.log('Assessment saved successfully:', data);
-      onSuccess(plan, data.id);
+      onSuccess(formattedPlan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({
