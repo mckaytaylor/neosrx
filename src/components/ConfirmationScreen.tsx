@@ -63,8 +63,12 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
   }, [toast, subscription]);
 
   const handleReturnToDashboard = () => {
-    // Force a hard refresh when returning to dashboard
-    window.location.href = "/dashboard";
+    // Navigate to dashboard without any state
+    navigate("/dashboard", { replace: true, state: {} });
+    // Force a page reload after a short delay to ensure state is cleared
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   if (!subscription) {
