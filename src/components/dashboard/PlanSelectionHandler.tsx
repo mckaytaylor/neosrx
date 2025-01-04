@@ -35,6 +35,16 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
 
   const handlePlanSelect = async (plan: string) => {
     try {
+      if (!plan || typeof plan !== 'string' || plan.trim() === '') {
+        console.error('Invalid plan:', plan);
+        toast({
+          title: "Error",
+          description: "Invalid plan selection",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -81,7 +91,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         .single();
 
       const assessmentData = {
-        user_id: user.id, // Explicitly set user_id
+        user_id: user.id,
         medication: medication,
         plan_type: plan,
         amount: amount,
