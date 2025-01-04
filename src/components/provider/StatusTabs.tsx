@@ -33,12 +33,14 @@ export const StatusTabs = ({ assessments, onStatusUpdate }: StatusTabsProps) => 
           assessments={completedAssessments} 
           showActions={true}
           onStatusUpdate={onStatusUpdate}
+          showDenialReason={false}
         />
       </TabsContent>
       <TabsContent value="prescribed">
         <AssessmentsTable 
           assessments={prescribedAssessments} 
           showActions={false}
+          showDenialReason={false}
         />
       </TabsContent>
       <TabsContent value="denied">
@@ -46,12 +48,14 @@ export const StatusTabs = ({ assessments, onStatusUpdate }: StatusTabsProps) => 
           assessments={deniedAssessments} 
           showActions={true}
           onStatusUpdate={onStatusUpdate}
+          showDenialReason={true}
         />
       </TabsContent>
       <TabsContent value="draft">
         <AssessmentsTable 
           assessments={draftAssessments} 
           showActions={false}
+          showDenialReason={false}
         />
       </TabsContent>
     </Tabs>

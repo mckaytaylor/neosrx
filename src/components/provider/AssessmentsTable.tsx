@@ -16,12 +16,14 @@ import { AssessmentActions } from "./AssessmentActions"
 interface AssessmentsTableProps {
   assessments: Assessment[]
   showActions?: boolean
+  showDenialReason?: boolean
   onStatusUpdate?: (assessmentId: string, newStatus: "prescribed" | "denied" | "completed", denialReason?: string) => Promise<void>
 }
 
 export const AssessmentsTable = ({ 
   assessments,
   showActions = false,
+  showDenialReason = false,
   onStatusUpdate 
 }: AssessmentsTableProps) => {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
@@ -67,7 +69,7 @@ export const AssessmentsTable = ({
               <TableHead>Plan Type</TableHead>
               <TableHead>Medication</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Denial Reason</TableHead>
+              {showDenialReason && <TableHead>Denial Reason</TableHead>}
               <TableHead>Submission Date</TableHead>
               {showActions && <TableHead>Actions</TableHead>}
             </TableRow>
@@ -89,15 +91,11 @@ export const AssessmentsTable = ({
                 <TableCell>
                   <div className="capitalize">{assessment.status}</div>
                 </TableCell>
-                <TableCell>
-                  {assessment.status === "denied" && assessment.denial_reason ? (
-                    <div className="text-sm text-muted-foreground">
-                      {assessment.denial_reason}
-                    </div>
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
+                {showDenialReason && (
+                  <TableCell>
+                    {assessment.denial_reason || "-"}
+                  </TableCell>
+                )}
                 <TableCell>
                   {assessment.created_at
                     ? new Date(assessment.created_at).toLocaleDateString()
