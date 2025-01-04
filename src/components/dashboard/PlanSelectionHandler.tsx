@@ -29,13 +29,16 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
   const { toast } = useToast();
 
   const formatPlanType = (plan: string): string => {
+    if (!plan) {
+      throw new Error('Plan type is required');
+    }
     return plan.toLowerCase().replace(/\s+/g, '_');
   };
 
-  const calculateAmount = (medication: string, formattedPlan: string): number | null => {
+  const calculateAmount = (medication: string, formattedPlan: string): number => {
     if (!medication || !PRICING_CONFIG[medication] || !PRICING_CONFIG[medication][formattedPlan]) {
       console.error('Invalid amount calculation:', { medication, formattedPlan });
-      return null;
+      throw new Error('Invalid plan or medication selected');
     }
 
     const amount = PRICING_CONFIG[medication][formattedPlan];
@@ -48,9 +51,11 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       throw new Error('Invalid plan selection');
     }
 
-    if (!medication) {
+    if (!medication || typeof medication !== 'string' || medication.trim() === '') {
       throw new Error('Please select a medication first');
     }
+
+    console.log('Plan selection validated:', { plan, medication });
   };
 
   const prepareAssessmentData = (
@@ -66,7 +71,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       ? formData.selectedConditions 
       : [];
 
-    return {
+    const data = {
       user_id: userId,
       medication,
       plan_type: formattedPlan,
@@ -76,13 +81,13 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       patient_weight: isNaN(weight) ? null : weight,
       status: 'draft' as const
     };
+
+    console.log('Prepared assessment data:', data);
+    return data;
   };
 
   const handlePlanSelect = async (plan: string) => {
     try {
-      const formattedPlan = formatPlanType(plan);
-      console.log('Formatted plan:', formattedPlan);
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -96,15 +101,10 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       const medication = formData.selectedMedication?.toLowerCase();
       validatePlanSelection(plan, medication);
 
+      const formattedPlan = formatPlanType(plan);
+      console.log('Formatted plan:', formattedPlan);
+
       const amount = calculateAmount(medication, formattedPlan);
-      if (!amount) {
-        toast({
-          title: "Error",
-          description: "Invalid plan or medication selected",
-          variant: "destructive",
-        });
-        return;
-      }
 
       const assessmentData = prepareAssessmentData(
         user.id,
