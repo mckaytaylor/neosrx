@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentFormFields } from "./PaymentFormFields";
+import { validateCardNumber, validateExpirationDate, validateCardCode, getErrorMessage } from "@/utils/paymentValidation";
 
 interface PaymentFormProps {
   subscriptionId: string;
@@ -21,91 +21,42 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
   });
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    
-    // Limit to 16 digits
+    let value = e.target.value.replace(/\D/g, '');
     if (value.length > 16) {
       value = value.slice(0, 16);
     }
-    
-    // Add spaces for readability
     const parts = [];
     for (let i = 0; i < value.length; i += 4) {
       parts.push(value.slice(i, i + 4));
     }
     const formattedValue = parts.join(' ');
-    
     setPaymentData({ ...paymentData, cardNumber: formattedValue });
   };
 
   const handleExpirationDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    
+    let value = e.target.value.replace(/\D/g, '');
     if (value.length > 4) {
       value = value.slice(0, 4);
     }
-    
     if (value.length >= 2) {
       const month = value.slice(0, 2);
       const year = value.slice(2);
       value = `${month}/${year}`;
     }
-
     setPaymentData({ ...paymentData, expirationDate: value });
   };
 
   const handleCardCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    let value = e.target.value.replace(/\D/g, '');
     if (value.length > 4) {
       value = value.slice(0, 4);
     }
     setPaymentData({ ...paymentData, cardCode: value });
   };
 
-  const validateExpirationDate = (expDate: string): boolean => {
-    const [month, year] = expDate.split('/');
-    if (!month || !year) return false;
-
-    const currentDate = new Date();
-    const expiration = new Date(parseInt(`20${year}`), parseInt(month) - 1);
-    return expiration > currentDate;
-  };
-
-  const validateCardNumber = (cardNumber: string): boolean => {
-    const cleanNumber = cardNumber.replace(/\s/g, '');
-    return cleanNumber.length >= 15 && cleanNumber.length <= 16;
-  };
-
-  const validateCardCode = (code: string): boolean => {
-    return code.length >= 3 && code.length <= 4;
-  };
-
-  const getErrorMessage = (error: any): string => {
-    const errorMessage = error?.message?.toLowerCase() || '';
-    
-    if (errorMessage.includes('card number format')) {
-      return 'Please enter a valid card number (15-16 digits).';
-    }
-    if (errorMessage.includes('expired')) {
-      return 'This card has expired. Please use a different card.';
-    }
-    if (errorMessage.includes('declined')) {
-      return 'Your card was declined. Please check your card details or try a different card.';
-    }
-    if (errorMessage.includes('invalid')) {
-      return 'The card information provided is invalid. Please check and try again.';
-    }
-    if (errorMessage.includes('cvv') || errorMessage.includes('security code')) {
-      return 'Invalid security code (CVV). Please check and try again.';
-    }
-    
-    return 'There was a problem processing your payment. Please try again.';
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Client-side validation
     if (!validateCardNumber(paymentData.cardNumber)) {
       toast({
         title: "Invalid Card Number",
@@ -136,7 +87,6 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     setIsProcessing(true);
 
     try {
-      // First, verify the assessment exists and has a valid amount
       const { data: assessment, error: assessmentError } = await supabase
         .from('assessments')
         .select('*')
@@ -167,7 +117,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
         body: {
           paymentData: {
             ...paymentData,
-            cardNumber: paymentData.cardNumber.replace(/\s/g, ''), // Remove spaces before sending
+            cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
           },
           subscriptionId,
         },
@@ -196,39 +146,12 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="cardNumber">Card Number</Label>
-        <Input
-          id="cardNumber"
-          placeholder="1234 5678 9012 3456"
-          value={paymentData.cardNumber}
-          onChange={handleCardNumberChange}
-          maxLength={19} // 16 digits + 3 spaces
-          required
-        />
-      </div>
-      <div>
-        <Label htmlFor="expirationDate">Expiration Date (MM/YY)</Label>
-        <Input
-          id="expirationDate"
-          placeholder="MM/YY"
-          value={paymentData.expirationDate}
-          onChange={handleExpirationDateChange}
-          maxLength={5}
-          required
-        />
-      </div>
-      <div>
-        <Label htmlFor="cardCode">CVV</Label>
-        <Input
-          id="cardCode"
-          placeholder="123"
-          value={paymentData.cardCode}
-          onChange={handleCardCodeChange}
-          maxLength={4}
-          required
-        />
-      </div>
+      <PaymentFormFields
+        paymentData={paymentData}
+        handleCardNumberChange={handleCardNumberChange}
+        handleExpirationDateChange={handleExpirationDateChange}
+        handleCardCodeChange={handleCardCodeChange}
+      />
       <div className="flex justify-end gap-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
