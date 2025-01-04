@@ -26,12 +26,12 @@ export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSu
 
       console.log('Successfully updated assessment:', data);
 
+      await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
+
       toast({
         title: "Payment successful",
         description: "Your assessment has been submitted for review.",
       });
-
-      await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
 
       if (data) {
         onSuccess(data);
@@ -92,6 +92,7 @@ export const PaymentSuccessHandler = () => {
 
         console.log('Successfully updated assessment:', data);
 
+        // Invalidate queries to refresh the data
         await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
 
         toast({

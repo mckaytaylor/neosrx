@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ConfirmationScreenProps {
   subscription: {
@@ -19,6 +20,7 @@ interface ConfirmationScreenProps {
 export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const capitalizedMedication = subscription?.medication?.charAt(0).toUpperCase() + subscription?.medication?.slice(1);
 
   useEffect(() => {
@@ -40,6 +42,9 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
           console.error("Error updating assessment status:", error);
           throw error;
         }
+
+        // Invalidate queries to refresh the data
+        await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
 
         console.log("Successfully updated assessment status to completed");
         
@@ -82,7 +87,7 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
     if (subscription) {
       updateAssessmentStatus();
     }
-  }, [toast, subscription]);
+  }, [toast, subscription, queryClient]);
 
   const handleReturnToDashboard = () => {
     navigate("/dashboard", { replace: true });

@@ -83,8 +83,8 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
       console.log('Processing payment for assessment:', {
         id: assessment.id,
         amount: assessment.amount,
-        plan: assessment.plan_type,
-        medication: assessment.medication
+        medication: assessment.medication,
+        plan: assessment.plan_type
       });
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -110,7 +110,7 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
 
       console.log('Payment processed successfully, updating assessment status');
 
-      // Update assessment status to completed with additional logging
+      // Update assessment status to completed
       const { error: updateError } = await supabase
         .from('assessments')
         .update({ status: 'completed' })
@@ -121,7 +121,7 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
         throw new Error("Failed to update assessment status");
       }
 
-      console.log('Successfully updated assessment status to completed for ID:', subscriptionId);
+      console.log('Successfully updated assessment status to completed');
 
       toast({
         title: "Payment Successful",
