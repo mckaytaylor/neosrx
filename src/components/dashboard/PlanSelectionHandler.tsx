@@ -6,48 +6,81 @@ interface PlanSelectionHandlerProps {
   onSuccess: (plan: string, assessmentId: string) => void;
 }
 
+interface PricingConfig {
+  [key: string]: {
+    [key: string]: number;
+  };
+}
+
+const PRICING_CONFIG: PricingConfig = {
+  tirzepatide: {
+    "1_month": 499,
+    "3_months": 810,
+    "5_months": 1300,
+  },
+  semaglutide: {
+    "1_month": 399,
+    "4_months": 640,
+    "7_months": 1050,
+  },
+};
+
 export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerProps) => {
   const { toast } = useToast();
 
-  const calculateAmount = (medication: string, plan: string): number | null => {
-    const amounts: Record<string, Record<string, number>> = {
-      tirzepatide: {
-        "1_month": 499,
-        "3_months": 810,
-        "5_months": 1300,
-      },
-      semaglutide: {
-        "1_month": 399,
-        "4_months": 640,
-        "7_months": 1050,
-      },
-    };
+  const formatPlanType = (plan: string): string => {
+    return plan.toLowerCase().replace(/\s+/g, '_');
+  };
 
-    const formattedPlan = plan.toLowerCase().replace(/\s+/g, '_');
-    
-    if (!medication || !amounts[medication] || !amounts[medication][formattedPlan]) {
-      console.error('Invalid amount calculation:', { medication, plan, formattedPlan });
+  const calculateAmount = (medication: string, formattedPlan: string): number | null => {
+    if (!medication || !PRICING_CONFIG[medication] || !PRICING_CONFIG[medication][formattedPlan]) {
+      console.error('Invalid amount calculation:', { medication, formattedPlan });
       return null;
     }
 
-    const calculatedAmount = amounts[medication][formattedPlan];
-    console.log('Calculated amount:', { medication, plan: formattedPlan, amount: calculatedAmount });
-    return calculatedAmount;
+    const amount = PRICING_CONFIG[medication][formattedPlan];
+    console.log('Calculated amount:', { medication, plan: formattedPlan, amount });
+    return amount;
+  };
+
+  const validatePlanSelection = (plan: string, medication: string) => {
+    if (!plan || typeof plan !== 'string' || plan.trim() === '') {
+      throw new Error('Invalid plan selection');
+    }
+
+    if (!medication) {
+      throw new Error('Please select a medication first');
+    }
+  };
+
+  const prepareAssessmentData = (
+    userId: string,
+    medication: string,
+    formattedPlan: string,
+    amount: number,
+    formData: any
+  ) => {
+    const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
+    const weight = parseFloat(formData.weight);
+    const medicalConditions = Array.isArray(formData.selectedConditions) 
+      ? formData.selectedConditions 
+      : [];
+
+    return {
+      user_id: userId,
+      medication,
+      plan_type: formattedPlan,
+      amount,
+      medical_conditions: medicalConditions,
+      patient_height: isNaN(height) ? null : height,
+      patient_weight: isNaN(weight) ? null : weight,
+      status: 'draft' as const
+    };
   };
 
   const handlePlanSelect = async (plan: string) => {
     try {
-      if (!plan || typeof plan !== 'string' || plan.trim() === '') {
-        console.error('Invalid plan:', plan);
-        toast({
-          title: "Error",
-          description: "Invalid plan selection",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const formattedPlan = plan.toLowerCase().replace(/\s+/g, '_');
+      const formattedPlan = formatPlanType(plan);
       console.log('Formatted plan:', formattedPlan);
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -61,14 +94,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       }
 
       const medication = formData.selectedMedication?.toLowerCase();
-      if (!medication) {
-        toast({
-          title: "Error",
-          description: "Please select a medication first",
-          variant: "destructive",
-        });
-        return;
-      }
+      validatePlanSelection(plan, medication);
 
       const amount = calculateAmount(medication, formattedPlan);
       if (!amount) {
@@ -80,12 +106,13 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const medicalConditions = Array.isArray(formData.selectedConditions) 
-        ? formData.selectedConditions 
-        : [];
-
-      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
-      const weight = parseFloat(formData.weight);
+      const assessmentData = prepareAssessmentData(
+        user.id,
+        medication,
+        formattedPlan,
+        amount,
+        formData
+      );
 
       // First check if there's an existing draft
       const { data: existingDraft } = await supabase
@@ -95,22 +122,10 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         .eq('status', 'draft')
         .single();
 
-      const assessmentData = {
-        user_id: user.id,
-        medication: medication,
-        plan_type: formattedPlan, // Using the formatted plan type
-        amount: amount,
-        medical_conditions: medicalConditions,
-        patient_height: isNaN(height) ? null : height,
-        patient_weight: isNaN(weight) ? null : weight,
-        status: 'draft' as const
-      };
-
       console.log('Saving assessment with data:', assessmentData);
 
       let data;
       if (existingDraft) {
-        // Update existing draft
         const { data: updatedData, error: updateError } = await supabase
           .from('assessments')
           .update(assessmentData)
@@ -124,7 +139,6 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         }
         data = updatedData;
       } else {
-        // Create new draft
         const { data: newData, error: insertError } = await supabase
           .from('assessments')
           .insert(assessmentData)
