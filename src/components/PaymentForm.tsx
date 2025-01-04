@@ -20,11 +20,29 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     cardCode: "",
   });
 
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    
+    // Limit to 16 digits
+    if (value.length > 16) {
+      value = value.slice(0, 16);
+    }
+    
+    // Add spaces for readability
+    const parts = [];
+    for (let i = 0; i < value.length; i += 4) {
+      parts.push(value.slice(i, i + 4));
+    }
+    const formattedValue = parts.join(' ');
+    
+    setPaymentData({ ...paymentData, cardNumber: formattedValue });
+  };
+
   const handleExpirationDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
     
-    if (value.length > 6) {
-      value = value.slice(0, 6);
+    if (value.length > 4) {
+      value = value.slice(0, 4);
     }
     
     if (value.length >= 2) {
@@ -36,6 +54,14 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     setPaymentData({ ...paymentData, expirationDate: value });
   };
 
+  const handleCardCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length > 4) {
+      value = value.slice(0, 4);
+    }
+    setPaymentData({ ...paymentData, cardCode: value });
+  };
+
   const validateExpirationDate = (expDate: string): boolean => {
     const [month, year] = expDate.split('/');
     if (!month || !year) return false;
@@ -45,10 +71,21 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     return expiration > currentDate;
   };
 
+  const validateCardNumber = (cardNumber: string): boolean => {
+    const cleanNumber = cardNumber.replace(/\s/g, '');
+    return cleanNumber.length >= 15 && cleanNumber.length <= 16;
+  };
+
+  const validateCardCode = (code: string): boolean => {
+    return code.length >= 3 && code.length <= 4;
+  };
+
   const getErrorMessage = (error: any): string => {
-    // Check for specific error messages from the payment processor
     const errorMessage = error?.message?.toLowerCase() || '';
     
+    if (errorMessage.includes('card number format')) {
+      return 'Please enter a valid card number (15-16 digits).';
+    }
     if (errorMessage.includes('expired')) {
       return 'This card has expired. Please use a different card.';
     }
@@ -62,18 +99,35 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
       return 'Invalid security code (CVV). Please check and try again.';
     }
     
-    // Default error message
     return 'There was a problem processing your payment. Please try again.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate expiration date before processing
+    // Client-side validation
+    if (!validateCardNumber(paymentData.cardNumber)) {
+      toast({
+        title: "Invalid Card Number",
+        description: "Please enter a valid card number (15-16 digits).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!validateExpirationDate(paymentData.expirationDate)) {
       toast({
         title: "Invalid Expiration Date",
         description: "The card expiration date is invalid or the card has expired.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateCardCode(paymentData.cardCode)) {
+      toast({
+        title: "Invalid Security Code",
+        description: "Please enter a valid security code (3-4 digits).",
         variant: "destructive",
       });
       return;
@@ -89,7 +143,10 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
 
       const response = await supabase.functions.invoke('process-payment', {
         body: {
-          paymentData,
+          paymentData: {
+            ...paymentData,
+            cardNumber: paymentData.cardNumber.replace(/\s/g, ''), // Remove spaces before sending
+          },
           subscriptionId,
         },
       });
@@ -123,18 +180,19 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
           id="cardNumber"
           placeholder="1234 5678 9012 3456"
           value={paymentData.cardNumber}
-          onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value })}
+          onChange={handleCardNumberChange}
+          maxLength={19} // 16 digits + 3 spaces
           required
         />
       </div>
       <div>
-        <Label htmlFor="expirationDate">Expiration Date (MM/YYYY)</Label>
+        <Label htmlFor="expirationDate">Expiration Date (MM/YY)</Label>
         <Input
           id="expirationDate"
-          placeholder="MM/YYYY"
+          placeholder="MM/YY"
           value={paymentData.expirationDate}
           onChange={handleExpirationDateChange}
-          maxLength={7}
+          maxLength={5}
           required
         />
       </div>
@@ -144,7 +202,8 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
           id="cardCode"
           placeholder="123"
           value={paymentData.cardCode}
-          onChange={(e) => setPaymentData({ ...paymentData, cardCode: e.target.value })}
+          onChange={handleCardCodeChange}
+          maxLength={4}
           required
         />
       </div>
