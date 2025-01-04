@@ -45,8 +45,9 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const medication = formData.selectedMedication?.toLowerCase();
-      const amount = calculateAmount(medication, plan);
+      const medication = formData.selectedMedication?.toLowerCase() || 'semaglutide';
+      const selectedPlan = plan || '4 months';
+      const amount = calculateAmount(medication, selectedPlan);
       
       if (!amount) {
         toast({
@@ -74,8 +75,8 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
 
       const assessmentData = {
         medication: medication,
-        plan_type: plan,
-        amount: amount, // This is now guaranteed to be a valid number
+        plan_type: selectedPlan,
+        amount: amount,
         medical_conditions: medicalConditions,
         patient_height: isNaN(height) ? null : height,
         patient_weight: isNaN(weight) ? null : weight,
@@ -97,7 +98,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         if (updateError) throw updateError;
         data = updatedData;
       } else {
-        // Create new draft
+        // Create new draft with user_id
         const { data: newData, error: insertError } = await supabase
           .from('assessments')
           .insert({
@@ -116,7 +117,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       }
 
       console.log('Assessment saved successfully:', data);
-      onSuccess(plan, data.id);
+      onSuccess(selectedPlan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({
