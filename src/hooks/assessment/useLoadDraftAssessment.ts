@@ -41,6 +41,13 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
           
           // Recalculate amount based on medication and plan type
           const calculatedAmount = calculateAmount(assessment.medication, assessment.plan_type);
+          console.log('Calculated amount for draft:', {
+            medication: assessment.medication,
+            plan: assessment.plan_type,
+            calculatedAmount,
+            currentAmount: assessment.amount
+          });
+
           if (calculatedAmount && calculatedAmount !== assessment.amount) {
             console.log('Updating assessment amount:', { 
               old: assessment.amount, 
@@ -55,6 +62,8 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
             if (updateError) {
               console.error('Error updating assessment amount:', updateError);
             }
+
+            assessment.amount = calculatedAmount;
           }
 
           setDraftAssessmentId(assessment.id);

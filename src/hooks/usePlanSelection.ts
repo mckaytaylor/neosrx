@@ -26,6 +26,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       const amount = calculateAmount(medication, plan);
       
       if (!amount) {
+        console.error('Invalid plan or medication selected:', { medication, plan });
         toast({
           title: "Error",
           description: "Invalid plan or medication selected",
@@ -45,6 +46,13 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         .single();
 
       if (existingDraft) {
+        console.log('Updating existing draft:', { 
+          id: existingDraft.id,
+          medication,
+          plan,
+          amount 
+        });
+
         const { data, error } = await supabase
           .from('assessments')
           .update({
@@ -57,8 +65,15 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           .single();
 
         if (error) throw error;
+        console.log('Successfully updated draft assessment:', data);
         onSuccess(plan, data.id);
       } else {
+        console.log('Creating new assessment:', { 
+          medication,
+          plan,
+          amount 
+        });
+
         const { data, error } = await supabase
           .from('assessments')
           .insert({
@@ -72,6 +87,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           .single();
 
         if (error) throw error;
+        console.log('Successfully created new assessment:', data);
         onSuccess(plan, data.id);
       }
     } catch (error: any) {
