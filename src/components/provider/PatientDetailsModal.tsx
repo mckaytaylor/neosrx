@@ -34,27 +34,27 @@ export const PatientDetailsModal = ({ patientId, isOpen, onClose }: PatientDetai
           profiles (
             first_name,
             last_name,
-            email
+            email,
+            utm_source,
+            utm_medium,
+            utm_campaign,
+            utm_term,
+            utm_content
           )
         `)
         .eq("user_id", patientId)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching assessments:', error)
+        throw error
+      }
+      
+      console.log('Fetched assessments with UTM data:', data)
       return data
     },
     enabled: !!patientId,
   })
-
-  const renderAssessmentContent = (assessment: any) => (
-    <div className="space-y-6">
-      <BasicInfoSection assessment={assessment} />
-      <MedicalHistorySection assessment={assessment} />
-      <MedicationsSection assessment={assessment} />
-      <AssessmentDetailsSection assessment={assessment} />
-      <ShippingSection assessment={assessment} />
-    </div>
-  )
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
@@ -95,3 +95,13 @@ export const PatientDetailsModal = ({ patientId, isOpen, onClose }: PatientDetai
     </Dialog>
   )
 }
+
+const renderAssessmentContent = (assessment: any) => (
+  <div className="space-y-6">
+    <BasicInfoSection assessment={assessment} />
+    <MedicalHistorySection assessment={assessment} />
+    <MedicationsSection assessment={assessment} />
+    <AssessmentDetailsSection assessment={assessment} />
+    <ShippingSection assessment={assessment} />
+  </div>
+)

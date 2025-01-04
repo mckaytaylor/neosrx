@@ -5,6 +5,13 @@ interface BasicInfoSectionProps {
 }
 
 export const BasicInfoSection = ({ assessment }: BasicInfoSectionProps) => {
+  // Get profile UTM parameters if assessment UTM parameters are not available
+  const utmSource = assessment.utm_source || assessment.profiles?.utm_source;
+  const utmMedium = assessment.utm_medium || assessment.profiles?.utm_medium;
+  const utmCampaign = assessment.utm_campaign || assessment.profiles?.utm_campaign;
+  const utmTerm = assessment.utm_term || assessment.profiles?.utm_term;
+  const utmContent = assessment.utm_content || assessment.profiles?.utm_content;
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -36,23 +43,23 @@ export const BasicInfoSection = ({ assessment }: BasicInfoSectionProps) => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Source</p>
-            <p>{assessment.utm_source || 'Not provided'}</p>
+            <p>{utmSource || 'Not provided'}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Medium</p>
-            <p>{assessment.utm_medium || 'Not provided'}</p>
+            <p>{utmMedium || 'Not provided'}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Campaign</p>
-            <p>{assessment.utm_campaign || 'Not provided'}</p>
+            <p>{utmCampaign || 'Not provided'}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Term</p>
-            <p>{assessment.utm_term || 'Not provided'}</p>
+            <p>{utmTerm || 'Not provided'}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Content</p>
-            <p>{assessment.utm_content || 'Not provided'}</p>
+            <p>{utmContent || 'Not provided'}</p>
           </div>
         </div>
       </div>
