@@ -1,9 +1,10 @@
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { AssessmentFormData } from "@/types/assessment";
 
 interface MedicalQuestion {
   label: string;
-  field: string;
+  field: keyof AssessmentFormData;
 }
 
 const medicalQuestions: MedicalQuestion[] = [
@@ -26,8 +27,8 @@ const medicalQuestions: MedicalQuestion[] = [
 ];
 
 interface MedicalQuestionsFormProps {
-  formData: Record<string, string>;
-  onChange: (field: string, value: string) => void;
+  formData: AssessmentFormData;
+  onChange: (field: keyof AssessmentFormData, value: string) => void;
 }
 
 export const MedicalQuestionsForm = ({ formData, onChange }: MedicalQuestionsFormProps) => {
@@ -37,7 +38,7 @@ export const MedicalQuestionsForm = ({ formData, onChange }: MedicalQuestionsFor
         <div key={field}>
           <Label>{label}</Label>
           <RadioGroup
-            value={formData[field]}
+            value={formData[field] as string}
             onValueChange={(value) => onChange(field, value)}
             className="flex gap-4 mt-1"
           >

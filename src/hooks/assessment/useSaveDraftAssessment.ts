@@ -28,7 +28,7 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
         // Calculate the amount based on the selected medication and plan
         const amount = formData.selectedMedication && formData.selectedPlan
           ? calculateAmount(formData.selectedMedication, formData.selectedPlan)
-          : null;
+          : 499; // Default amount
 
         console.log('Calculated amount:', { 
           medication: formData.selectedMedication, 
@@ -57,8 +57,8 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
           has_allergies: formData.hasAllergies === "yes",
           allergies_list: formData.allergiesList || null,
           taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || null,
-          plan_type: formData.selectedPlan || null,
+          medication: formData.selectedMedication || "tirzepatide",
+          plan_type: formData.selectedPlan || "1 month",
           amount: amount,
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
