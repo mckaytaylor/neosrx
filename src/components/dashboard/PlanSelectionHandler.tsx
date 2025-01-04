@@ -21,7 +21,6 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      // Calculate amount before database operations
       const medication = formData.selectedMedication?.toLowerCase();
       const amount = calculateAmount(medication, plan);
       
@@ -34,6 +33,25 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
+      console.log('Calculated amount:', { medication, plan, amount });
+
+      const medicalConditions = Array.isArray(formData.selectedConditions) 
+        ? formData.selectedConditions 
+        : [];
+
+      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
+      const weight = parseFloat(formData.weight);
+
+      const assessmentData = {
+        medication: medication,
+        plan_type: plan,
+        amount: amount,
+        medical_conditions: medicalConditions,
+        patient_height: isNaN(height) ? null : height,
+        patient_weight: isNaN(weight) ? null : weight,
+        status: 'draft' as const
+      };
+
       // First check if there's an existing draft
       const { data: existingDraft } = await supabase
         .from('assessments')
@@ -42,77 +60,39 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         .eq('status', 'draft')
         .single();
 
+      let data;
       if (existingDraft) {
-        // Update existing draft with the calculated amount
-        const { data, error } = await supabase
+        // Update existing draft
+        const { data: updatedData, error: updateError } = await supabase
           .from('assessments')
-          .update({
-            medication: medication,
-            plan_type: plan,
-            amount: amount,
-            medical_conditions: Array.isArray(formData.selectedConditions) ? formData.selectedConditions : [],
-            patient_height: calculateHeight(formData.heightFeet, formData.heightInches),
-            patient_weight: parseFloat(formData.weight) || null,
-            date_of_birth: formData.dateOfBirth || null,
-            gender: formData.gender || null,
-            cell_phone: formData.cellPhone || null,
-            other_medical_conditions: formData.otherCondition || null,
-            medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes",
-            family_mtc_history: formData.familyMtcHistory === "yes",
-            men2: formData.men2 === "yes",
-            pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes",
-            exercise_activity: formData.exerciseActivity || null,
-            taking_medications: formData.takingMedications === "yes",
-            medications_list: formData.medicationsList || null,
-            previous_glp1: formData.previousGlp1 === "yes",
-            recent_glp1: formData.recentGlp1 === "yes",
-            has_allergies: formData.hasAllergies === "yes",
-            allergies_list: formData.allergiesList || null,
-            taking_blood_thinners: formData.takingBloodThinners === "yes",
-          })
+          .update(assessmentData)
           .eq('id', existingDraft.id)
           .select()
           .single();
 
-        if (error) throw error;
-        if (data) onSuccess(plan, data.id);
-        return;
+        if (updateError) throw updateError;
+        data = updatedData;
+      } else {
+        // Create new draft
+        const { data: newData, error: insertError } = await supabase
+          .from('assessments')
+          .insert({
+            ...assessmentData,
+            user_id: user.id
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        data = newData;
       }
 
-      // If no existing draft, create a new one with the calculated amount
-      const { data, error } = await supabase
-        .from('assessments')
-        .insert({
-          user_id: user.id,
-          medication: medication,
-          plan_type: plan,
-          amount: amount,
-          medical_conditions: Array.isArray(formData.selectedConditions) ? formData.selectedConditions : [],
-          patient_height: calculateHeight(formData.heightFeet, formData.heightInches),
-          patient_weight: parseFloat(formData.weight) || null,
-          date_of_birth: formData.dateOfBirth || null,
-          gender: formData.gender || null,
-          cell_phone: formData.cellPhone || null,
-          other_medical_conditions: formData.otherCondition || null,
-          medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes",
-          family_mtc_history: formData.familyMtcHistory === "yes",
-          men2: formData.men2 === "yes",
-          pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes",
-          exercise_activity: formData.exerciseActivity || null,
-          taking_medications: formData.takingMedications === "yes",
-          medications_list: formData.medicationsList || null,
-          previous_glp1: formData.previousGlp1 === "yes",
-          recent_glp1: formData.recentGlp1 === "yes",
-          has_allergies: formData.hasAllergies === "yes",
-          allergies_list: formData.allergiesList || null,
-          taking_blood_thinners: formData.takingBloodThinners === "yes",
-          status: 'draft'
-        })
-        .select()
-        .single();
+      if (!data) {
+        throw new Error("Failed to save assessment");
+      }
 
-      if (error) throw error;
-      if (data) onSuccess(plan, data.id);
+      console.log('Saved assessment:', data);
+      onSuccess(plan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({
@@ -123,7 +103,9 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
     }
   };
 
-  const calculateAmount = (medication: string, plan: string): number | null => {
+  const calculateAmount = (medication: string | undefined, plan: string): number | null => {
+    if (!medication) return null;
+
     const amounts: Record<string, Record<string, number>> = {
       tirzepatide: {
         "1 month": 499,
@@ -137,19 +119,12 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       },
     };
 
-    if (!medication || !amounts[medication] || !amounts[medication][plan]) {
+    if (!amounts[medication] || !amounts[medication][plan]) {
       console.error('Invalid amount calculation:', { medication, plan });
       return null;
     }
 
     return amounts[medication][plan];
-  };
-
-  const calculateHeight = (feet: string, inches: string): number | null => {
-    const feetNum = parseInt(feet);
-    const inchesNum = parseInt(inches || '0');
-    if (isNaN(feetNum)) return null;
-    return feetNum * 12 + (isNaN(inchesNum) ? 0 : inchesNum);
   };
 
   return { handlePlanSelect };
