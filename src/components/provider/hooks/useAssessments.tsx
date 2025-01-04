@@ -40,7 +40,19 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
 
       const { data, error } = await supabase
         .from("assessments")
-        .select("*, profiles(first_name, last_name, email)")
+        .select(`
+          *,
+          profiles (
+            first_name,
+            last_name,
+            email,
+            utm_source,
+            utm_medium,
+            utm_campaign,
+            utm_term,
+            utm_content
+          )
+        `)
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -48,7 +60,7 @@ export const useAssessments = (isProvider: boolean | null, authChecked: boolean)
         throw error
       }
       
-      console.log('Fetched assessments:', data)
+      console.log('Fetched assessments with profiles:', data)
       return data as Assessment[]
     },
     enabled: isProvider === true && authChecked,
