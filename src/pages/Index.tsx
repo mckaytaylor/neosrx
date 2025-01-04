@@ -87,14 +87,26 @@ const Index = () => {
         });
 
         if (signInError) {
+          console.error('Sign in error:', signInError);
+          
           if (signInError.message.includes('Invalid login credentials')) {
             toast({
               title: "Login Failed",
-              description: "Invalid email or password. Please try again.",
+              description: "The email or password you entered is incorrect. Please try again.",
               variant: "destructive",
             });
             return;
           }
+
+          if (signInError.message.includes('Email not confirmed')) {
+            toast({
+              title: "Email Not Verified",
+              description: "Please check your email and verify your account before signing in.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           throw signInError;
         }
       }
