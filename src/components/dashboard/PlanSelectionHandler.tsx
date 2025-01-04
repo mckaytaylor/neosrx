@@ -45,8 +45,8 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const medication = formData.selectedMedication?.toLowerCase() || 'semaglutide';
-      const selectedPlan = plan || '4 months';
+      const medication = formData.selectedMedication?.toLowerCase();
+      const selectedPlan = plan || '1 month';
       const amount = calculateAmount(medication, selectedPlan);
       
       if (!amount) {
