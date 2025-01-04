@@ -54,21 +54,44 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
     };
 
     if (subscription) {
+      // Verify the assessment status is completed
+      const verifyAssessmentStatus = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("assessments")
+            .select("status")
+            .eq("id", subscription.id)
+            .single();
+
+          if (error) {
+            console.error("Error verifying assessment status:", error);
+            return;
+          }
+
+          if (data.status !== "completed") {
+            console.log("Updating assessment status to completed");
+            await supabase
+              .from("assessments")
+              .update({ status: "completed" })
+              .eq("id", subscription.id);
+          }
+        } catch (error) {
+          console.error("Error in verifyAssessmentStatus:", error);
+        }
+      };
+
+      verifyAssessmentStatus();
+      sendConfirmationEmail();
+      
       toast({
         title: "Payment Successful",
         description: "Your order has been confirmed.",
       });
-      sendConfirmationEmail();
     }
   }, [toast, subscription]);
 
   const handleReturnToDashboard = () => {
-    // Navigate to dashboard without any state
-    navigate("/dashboard", { replace: true, state: {} });
-    // Force a page reload after a short delay to ensure state is cleared
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    navigate("/dashboard", { replace: true });
   };
 
   if (!subscription) {

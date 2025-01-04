@@ -59,13 +59,25 @@ export const PaymentSuccessHandler = () => {
   useEffect(() => {
     const updateAssessmentStatus = async () => {
       if (!assessmentId) {
-        console.log('No assessment ID found in URL parameters');
+        console.error('No assessment ID found in URL parameters');
         return;
       }
 
       try {
         console.log('Updating assessment status for ID:', assessmentId);
         
+        // First, verify the assessment exists and get its current data
+        const { data: assessment, error: fetchError } = await supabase
+          .from("assessments")
+          .select("*")
+          .eq("id", assessmentId)
+          .single();
+
+        if (fetchError || !assessment) {
+          throw new Error('Assessment not found');
+        }
+
+        // Update the assessment status to completed
         const { data, error } = await supabase
           .from("assessments")
           .update({ status: "completed" })
@@ -87,10 +99,10 @@ export const PaymentSuccessHandler = () => {
           description: "Your assessment has been submitted for review.",
         });
 
-        navigate("/dashboard", { 
+        // Navigate to confirmation screen with assessment data
+        navigate("/confirmation", { 
           replace: true,
           state: { 
-            showCompletedOrder: true,
             subscription: data 
           }
         });
@@ -101,6 +113,8 @@ export const PaymentSuccessHandler = () => {
           description: "Failed to update assessment status. Please contact support.",
           variant: "destructive",
         });
+        // Navigate to dashboard on error
+        navigate("/dashboard", { replace: true });
       }
     };
 
