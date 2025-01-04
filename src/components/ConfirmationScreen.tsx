@@ -8,9 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ConfirmationScreenProps {
   subscription: {
+    id: string;
     medication: string;
     plan_type: string;
     amount: number;
+    status: string;
   };
 }
 
@@ -20,25 +22,39 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
   const capitalizedMedication = subscription?.medication?.charAt(0).toUpperCase() + subscription?.medication?.slice(1);
 
   useEffect(() => {
-    const sendConfirmationEmail = async () => {
-      if (subscription) {
-        try {
-          // Get the current user's email
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user?.email) {
-            console.error("No user email found");
-            return;
-          }
+    const updateAssessmentStatus = async () => {
+      if (!subscription?.id) {
+        console.error("No assessment ID found");
+        return;
+      }
 
-          const { error } = await supabase.functions.invoke('send-confirmation-email', {
+      try {
+        console.log("Updating assessment status for ID:", subscription.id);
+        
+        const { error } = await supabase
+          .from("assessments")
+          .update({ status: "completed" })
+          .eq("id", subscription.id);
+
+        if (error) {
+          console.error("Error updating assessment status:", error);
+          throw error;
+        }
+
+        console.log("Successfully updated assessment status to completed");
+        
+        // Send confirmation email
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          const { error: emailError } = await supabase.functions.invoke('send-confirmation-email', {
             body: {
               to: user.email,
               subscription,
             },
           });
 
-          if (error) {
-            console.error("Error sending confirmation email:", error);
+          if (emailError) {
+            console.error("Error sending confirmation email:", emailError);
             toast({
               title: "Error",
               description: "Failed to send confirmation email. Don't worry, your order is still confirmed!",
@@ -47,46 +63,24 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
           } else {
             console.log("Confirmation email sent successfully");
           }
-        } catch (error) {
-          console.error("Error in sendConfirmationEmail:", error);
         }
+
+        toast({
+          title: "Payment Successful",
+          description: "Your order has been confirmed.",
+        });
+      } catch (error) {
+        console.error("Error in updateAssessmentStatus:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update assessment status. Please contact support.",
+          variant: "destructive",
+        });
       }
     };
 
     if (subscription) {
-      // Verify the assessment status is completed
-      const verifyAssessmentStatus = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("assessments")
-            .select("status")
-            .eq("id", subscription.id)
-            .single();
-
-          if (error) {
-            console.error("Error verifying assessment status:", error);
-            return;
-          }
-
-          if (data.status !== "completed") {
-            console.log("Updating assessment status to completed");
-            await supabase
-              .from("assessments")
-              .update({ status: "completed" })
-              .eq("id", subscription.id);
-          }
-        } catch (error) {
-          console.error("Error in verifyAssessmentStatus:", error);
-        }
-      };
-
-      verifyAssessmentStatus();
-      sendConfirmationEmail();
-      
-      toast({
-        title: "Payment Successful",
-        description: "Your order has been confirmed.",
-      });
+      updateAssessmentStatus();
     }
   }, [toast, subscription]);
 
