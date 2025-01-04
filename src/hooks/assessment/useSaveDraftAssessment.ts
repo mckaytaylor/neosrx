@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentFormData } from "@/types/assessment";
+import { calculateAmount } from "@/utils/pricingUtils";
 
 export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssessmentId: string | null) => {
   const { toast } = useToast();
@@ -23,6 +24,11 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
         console.log('Saving draft assessment:', { formData, draftAssessmentId });
         const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
         const weight = parseFloat(formData.weight);
+
+        // Calculate the amount based on the selected medication and plan
+        const amount = formData.selectedMedication && formData.selectedPlan
+          ? calculateAmount(formData.selectedMedication, formData.selectedPlan)
+          : null;
 
         if (!formData.selectedConditions?.length && !formData.weight && !formData.heightFeet) {
           console.log('No significant changes to save');
@@ -50,9 +56,9 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
           has_allergies: formData.hasAllergies === "yes",
           allergies_list: formData.allergiesList || null,
           taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || 'tirzepatide',
-          plan_type: formData.selectedPlan || '1 month',
-          amount: 499,
+          medication: formData.selectedMedication || null,
+          plan_type: formData.selectedPlan || null,
+          amount: amount || null,
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,

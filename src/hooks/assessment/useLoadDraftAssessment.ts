@@ -40,7 +40,10 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
           console.log('Found draft assessment:', assessment);
           
           // Recalculate amount based on medication and plan type
-          const calculatedAmount = calculateAmount(assessment.medication, assessment.plan_type);
+          const calculatedAmount = assessment.medication && assessment.plan_type
+            ? calculateAmount(assessment.medication, assessment.plan_type)
+            : null;
+
           console.log('Calculated amount for draft:', {
             medication: assessment.medication,
             plan: assessment.plan_type,

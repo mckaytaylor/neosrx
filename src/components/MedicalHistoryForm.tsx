@@ -3,44 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Stethoscope } from "lucide-react";
 import { HeightInput } from "./HeightInput";
 import { useToast } from "@/hooks/use-toast";
-
-const medicalConditions = [
-  "High/Low Blood Pressure",
-  "Low Blood Sugar",
-  "Type 1 Diabetes",
-  "Type 2 Diabetes",
-  "Gastroparesis",
-  "History of Thyroid Cancer",
-  "Thyroid Abnormality",
-  "History of Pancreatitis",
-  "Hypoglycemia",
-  "Chest Pain/Angina",
-  "Stroke/CVA",
-  "Heart Attack/MI",
-  "Seizures",
-  "Fainting/Dizziness",
-  "Any Heart Surgery/Stent/Cath",
-  "Chronic Fatigue",
-  "Asthma",
-  "Liver Disease",
-  "Hepatitis",
-  "Kidney Problems",
-  "COPD/Emphysema",
-  "History of Blood Clots/Bleeding Disorder",
-  "HIV AIDS/STDS",
-  "Weakness/Paresthesia",
-  "Nausea/Motion sickness",
-  "Cancer/Any Radiation/Chemotherapy",
-  "Difficulty Urinating",
-  "Gallbladder Disease",
-  "Biliary Tract Disease",
-  "Multiple Endocrine Neoplasia Type 2",
-  "None of the above"
-];
+import { MedicalConditionsList } from "./medical-history/MedicalConditionsList";
+import { MedicalQuestionsForm } from "./medical-history/MedicalQuestionsForm";
+import { MedicationsForm } from "./medical-history/MedicationsForm";
 
 interface MedicalHistoryFormData {
   selectedConditions: string[];
@@ -86,26 +54,13 @@ export const MedicalHistoryForm = ({ formData, onChange }: MedicalHistoryFormPro
 
       <div className="space-y-6">
         <div>
-          <Label className="text-base font-medium">Please select any conditions you have or had in the past:</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-            {medicalConditions.map((condition) => (
-              <div key={condition} className="flex items-start space-x-2">
-                <Checkbox
-                  id={condition}
-                  checked={formData.selectedConditions.includes(condition)}
-                  onCheckedChange={(checked) => {
-                    const newConditions = checked
-                      ? [...formData.selectedConditions, condition]
-                      : formData.selectedConditions.filter((c) => c !== condition);
-                    onChange({ selectedConditions: newConditions });
-                  }}
-                />
-                <Label htmlFor={condition} className="text-sm leading-none pt-0.5">
-                  {condition}
-                </Label>
-              </div>
-            ))}
-          </div>
+          <Label className="text-base font-medium">
+            Please select any conditions you have or had in the past:
+          </Label>
+          <MedicalConditionsList
+            selectedConditions={formData.selectedConditions}
+            onChange={(conditions) => onChange({ selectedConditions: conditions })}
+          />
           <div className="mt-4">
             <Label htmlFor="otherCondition">Other medical conditions:</Label>
             <Textarea
@@ -118,42 +73,10 @@ export const MedicalHistoryForm = ({ formData, onChange }: MedicalHistoryFormPro
           </div>
         </div>
 
-        {[
-          {
-            label: "Have you been diagnosed with Medullary Thyroid Cancer (MTC)?",
-            field: "medullaryThyroidCancer"
-          },
-          {
-            label: "Family history of MTC?",
-            field: "familyMtcHistory"
-          },
-          {
-            label: "Multiple Endocrine Neoplasia Syndrome Type 2 (MEN2)?",
-            field: "men2"
-          },
-          {
-            label: "Currently pregnant or breastfeeding?",
-            field: "pregnantOrBreastfeeding"
-          }
-        ].map(({ label, field }) => (
-          <div key={field}>
-            <Label>{label}</Label>
-            <RadioGroup
-              value={formData[field]}
-              onValueChange={(value) => onChange({ [field]: value })}
-              className="flex gap-4 mt-1"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yes" id={`${field}-yes`} />
-                <Label htmlFor={`${field}-yes`}>Yes</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id={`${field}-no`} />
-                <Label htmlFor={`${field}-no`}>No</Label>
-              </div>
-            </RadioGroup>
-          </div>
-        ))}
+        <MedicalQuestionsForm
+          formData={formData}
+          onChange={(field, value) => onChange({ [field]: value })}
+        />
 
         <div>
           <Label htmlFor="weight">Current Weight (lbs)</Label>
@@ -188,31 +111,12 @@ export const MedicalHistoryForm = ({ formData, onChange }: MedicalHistoryFormPro
           </RadioGroup>
         </div>
 
-        <div>
-          <Label>Currently taking supplements or prescription meds?</Label>
-          <RadioGroup
-            value={formData.takingMedications}
-            onValueChange={(value) => onChange({ takingMedications: value })}
-            className="flex gap-4 mt-1"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="yes" id="meds-yes" />
-              <Label htmlFor="meds-yes">Yes</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="no" id="meds-no" />
-              <Label htmlFor="meds-no">No</Label>
-            </div>
-          </RadioGroup>
-          {formData.takingMedications === "yes" && (
-            <Textarea
-              value={formData.medicationsList}
-              onChange={(e) => onChange({ medicationsList: e.target.value })}
-              placeholder="Please list all medications and supplements..."
-              className="mt-2"
-            />
-          )}
-        </div>
+        <MedicationsForm
+          takingMedications={formData.takingMedications}
+          medicationsList={formData.medicationsList}
+          onTakingMedicationsChange={(value) => onChange({ takingMedications: value })}
+          onMedicationsListChange={(value) => onChange({ medicationsList: value })}
+        />
 
         <div>
           <Label>Have you ever taken GLP-1 medications before?</Label>
