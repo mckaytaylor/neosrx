@@ -28,12 +28,23 @@ export const convertAssessmentsToCSV = (assessments: any[]) => {
 
   // Convert assessments to CSV rows
   const rows = assessments.map(assessment => {
-    // Get UTM parameters from assessment or fall back to profile UTM parameters
-    const utmSource = assessment.utm_source || assessment.profiles?.utm_source || '';
-    const utmMedium = assessment.utm_medium || assessment.profiles?.utm_medium || '';
-    const utmCampaign = assessment.utm_campaign || assessment.profiles?.utm_campaign || '';
-    const utmTerm = assessment.utm_term || assessment.profiles?.utm_term || '';
-    const utmContent = assessment.utm_content || assessment.profiles?.utm_content || '';
+    // Debug log to check UTM data
+    console.log('Processing assessment for CSV:', {
+      assessmentUtm: {
+        source: assessment.utm_source,
+        medium: assessment.utm_medium,
+        campaign: assessment.utm_campaign,
+        term: assessment.utm_term,
+        content: assessment.utm_content
+      },
+      profileUtm: assessment.profiles ? {
+        source: assessment.profiles.utm_source,
+        medium: assessment.profiles.utm_medium,
+        campaign: assessment.profiles.utm_campaign,
+        term: assessment.profiles.utm_term,
+        content: assessment.profiles.utm_content
+      } : null
+    });
 
     return [
       `${assessment.profiles?.first_name || ''} ${assessment.profiles?.last_name || ''}`,
@@ -52,11 +63,11 @@ export const convertAssessmentsToCSV = (assessments: any[]) => {
       assessment.shipping_city || '',
       assessment.shipping_state || '',
       assessment.shipping_zip || '',
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      utmTerm,
-      utmContent
+      assessment.profiles?.utm_source || assessment.utm_source || '',
+      assessment.profiles?.utm_medium || assessment.utm_medium || '',
+      assessment.profiles?.utm_campaign || assessment.utm_campaign || '',
+      assessment.profiles?.utm_term || assessment.utm_term || '',
+      assessment.profiles?.utm_content || assessment.utm_content || ''
     ];
   });
 
