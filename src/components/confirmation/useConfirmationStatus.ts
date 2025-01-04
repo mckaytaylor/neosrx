@@ -25,18 +25,38 @@ export const useConfirmationStatus = (subscription: Subscription) => {
       try {
         console.log("Updating assessment status for ID:", subscription.id);
         
-        const { error } = await supabase
+        // First verify the current status
+        const { data: currentAssessment, error: fetchError } = await supabase
           .from("assessments")
-          .update({ status: "completed" })
-          .eq("id", subscription.id);
+          .select("status")
+          .eq("id", subscription.id)
+          .maybeSingle();
 
-        if (error) {
-          console.error("Error updating assessment status:", error);
-          throw error;
+        if (fetchError) {
+          console.error("Error fetching assessment:", fetchError);
+          throw fetchError;
         }
 
-        await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
-        console.log("Successfully updated assessment status to completed");
+        if (!currentAssessment) {
+          console.error("Assessment not found");
+          throw new Error("Assessment not found");
+        }
+
+        // Only update if not already completed
+        if (currentAssessment.status !== "completed") {
+          const { error } = await supabase
+            .from("assessments")
+            .update({ status: "completed" })
+            .eq("id", subscription.id);
+
+          if (error) {
+            console.error("Error updating assessment status:", error);
+            throw error;
+          }
+
+          await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
+          console.log("Successfully updated assessment status to completed");
+        }
         
         // Send confirmation email
         const { data: { user } } = await supabase.auth.getUser();
