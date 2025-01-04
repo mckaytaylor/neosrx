@@ -17,8 +17,8 @@ const Index = () => {
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
       toast({
-        title: "Email verified",
-        description: "Your email has been verified. You can now proceed.",
+        title: "Success",
+        description: "You have been successfully signed in.",
       });
       navigate("/dashboard");
     }
@@ -40,14 +40,7 @@ const Index = () => {
     firstName?: string; 
     lastName?: string 
   }) => {
-    if (isSubmitting) {
-      toast({
-        title: "Please wait",
-        description: "You can only make one request every 45 seconds.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (isSubmitting) return;
 
     try {
       setIsSubmitting(true);
@@ -65,57 +58,55 @@ const Index = () => {
         });
 
         if (signUpError) {
-          if (signUpError.message.includes('rate_limit')) {
-            throw new Error("Please wait 45 seconds before trying again.");
+          if (signUpError.message.includes('User already registered')) {
+            toast({
+              title: "Account Exists",
+              description: "An account with this email already exists. Please sign in instead.",
+              variant: "destructive",
+            });
+            return;
           }
           throw signUpError;
         }
 
         if (!signUpData.user) {
-          throw new Error("Failed to create user account.");
+          throw new Error("Failed to create account");
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) throw sessionError;
-        
-        if (!sessionData.session) {
-          setUserEmail(data.email);
-          setShowVerificationAlert(true);
-          return;
-        }
-
+        setUserEmail(data.email);
+        setShowVerificationAlert(true);
         toast({
-          title: "Account created",
+          title: "Account Created",
           description: "Please check your email to verify your account.",
         });
 
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password,
         });
 
-        if (error) throw error;
-
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in.",
-        });
+        if (signInError) {
+          if (signInError.message.includes('Invalid login credentials')) {
+            toast({
+              title: "Login Failed",
+              description: "Invalid email or password. Please try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw signInError;
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setTimeout(() => {
-        setIsSubmitting(false);
-      }, 45000);
+      setIsSubmitting(false);
     }
   };
 

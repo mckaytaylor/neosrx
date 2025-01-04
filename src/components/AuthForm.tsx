@@ -21,20 +21,31 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
-    if (!email || !password || (mode === "register" && (!firstName || !lastName))) {
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
         variant: "destructive",
       });
       return;
     }
 
-    // Validate password length
+    // Validate required fields
+    if (!email || !password || (mode === "register" && (!firstName || !lastName))) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate password length and complexity
     if (password.length < 6) {
       toast({
-        title: "Error",
+        title: "Invalid Password",
         description: "Password must be at least 6 characters long",
         variant: "destructive",
       });
@@ -57,6 +68,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="John"
               disabled={disabled}
+              required
             />
           </div>
           <div className="space-y-2">
@@ -68,6 +80,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Doe"
               disabled={disabled}
+              required
             />
           </div>
         </div>
@@ -81,6 +94,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           disabled={disabled}
+          required
         />
       </div>
       <div className="space-y-2">
@@ -92,6 +106,7 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
           disabled={disabled}
+          required
         />
         <p className="text-sm text-gray-500">Password must be at least 6 characters long</p>
       </div>
