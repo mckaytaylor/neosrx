@@ -15,6 +15,19 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
           return;
         }
 
+        // First check if assessment is already completed
+        const { data: currentAssessment } = await supabase
+          .from('assessments')
+          .select('status')
+          .eq('id', draftAssessmentId)
+          .single();
+
+        // Don't update if assessment is already completed
+        if (currentAssessment?.status === 'completed') {
+          console.log('Assessment is already completed, skipping draft save');
+          return;
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           console.log('No authenticated user found');
