@@ -1,3 +1,5 @@
+import { UtmParameters } from "./utm";
+
 export interface AssessmentFormData {
   dateOfBirth: string;
   gender: string;
@@ -28,7 +30,7 @@ export interface AssessmentFormData {
   assessment: any | null;
 }
 
-export interface Assessment {
+export interface Assessment extends UtmParameters {
   id: string;
   user_id: string;
   status: 'draft' | 'completed' | 'prescribed' | 'denied';
