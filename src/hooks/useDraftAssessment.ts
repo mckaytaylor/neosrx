@@ -71,7 +71,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
                 user_id: user.id,
                 medication: 'semaglutide',
                 plan_type: '4 months',
-                amount: 640,
+                amount: 640, // Default amount for 4 months of semaglutide
                 status: 'draft'
               })
               .select()
@@ -111,7 +111,6 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
         const weight = parseFloat(formData.weight);
 
-        // Only save if we have some meaningful data to save
         if (!formData.selectedConditions?.length && !formData.weight && !formData.heightFeet) {
           return;
         }
@@ -147,8 +146,6 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           amount: 640 // Default amount for 4 months of semaglutide
         };
 
-        console.log('Saving draft assessment:', assessmentData);
-
         const { error } = await supabase
           .from('assessments')
           .update(assessmentData)
@@ -166,7 +163,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
     };
 
     saveDraftAssessment();
-  }, [formData, draftAssessmentId]);
+  }, [formData]);
 
   return { draftAssessmentId };
 };

@@ -115,7 +115,6 @@ export const DashboardContent = ({
             (currentStep === 4 && !formData.selectedPlan) ||
             (currentStep === 5 && !isShippingComplete())
           }
-          formData={formData}
         />
       </CardContent>
     </Card>
