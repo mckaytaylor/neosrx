@@ -104,12 +104,13 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
       });
 
       if (response.error) {
+        console.error('Payment processing error:', response.error);
         throw new Error(response.error.message || "Payment processing failed");
       }
 
       console.log('Payment processed successfully, updating assessment status');
 
-      // Update assessment status to completed
+      // Update assessment status to completed with additional logging
       const { error: updateError } = await supabase
         .from('assessments')
         .update({ status: 'completed' })
@@ -120,7 +121,7 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
         throw new Error("Failed to update assessment status");
       }
 
-      console.log('Successfully updated assessment status to completed');
+      console.log('Successfully updated assessment status to completed for ID:', subscriptionId);
 
       toast({
         title: "Payment Successful",
@@ -130,6 +131,7 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
       onSuccess();
     } catch (error) {
       console.error('Payment error:', error);
+      console.error('Payment error details:', JSON.stringify(error, null, 2));
       toast({
         title: "Payment Failed",
         description: getErrorMessage(error),
