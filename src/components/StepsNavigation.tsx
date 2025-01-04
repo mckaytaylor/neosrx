@@ -12,6 +12,8 @@ interface StepsNavigationProps {
   formData?: any;
 }
 
+type AssessmentStatus = "draft" | "completed" | "prescribed" | "denied";
+
 export const StepsNavigation = ({
   currentStep,
   totalSteps,
@@ -36,6 +38,25 @@ export const StepsNavigation = ({
           variant: "destructive",
         });
         return;
+      }
+
+      // Check if we have a draft assessment ID
+      if (!formData?.id) {
+        // Create a new assessment if we don't have an ID
+        const { data: newAssessment, error: createError } = await supabase
+          .from('assessments')
+          .insert({
+            user_id: user.id,
+            medication: "semaglutide",
+            plan_type: "4 months",
+            amount: 640,
+            status: 'draft' as AssessmentStatus
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        formData = { ...formData, id: newAssessment.id };
       }
 
       // Convert radio button values to boolean
@@ -66,7 +87,7 @@ export const StepsNavigation = ({
         shipping_city: formData.shippingCity || null,
         shipping_state: formData.shippingState || null,
         shipping_zip: formData.shippingZip || null,
-        status: 'draft',
+        status: 'draft' as AssessmentStatus,
         amount: 640
       };
 
