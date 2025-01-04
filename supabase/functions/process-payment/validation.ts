@@ -9,20 +9,22 @@ export function validatePaymentData(paymentData: PaymentData): void {
   
   // Special handling for test card in development
   if (Deno.env.get('ENVIRONMENT') === 'development' && cardNumber === '4111111111111111') {
-    console.log('Validating test card in development environment');
+    console.log('Test card validation passed');
     return;
   }
 
-  if (cardNumber.length < 15 || cardNumber.length > 16) {
+  // Regular validation for non-test cards
+  if (!/^\d{15,16}$/.test(cardNumber)) {
     throw new Error('Invalid card number format');
   }
 
   const expDate = paymentData.expirationDate.replace(/\D/g, '');
-  if (expDate.length !== 4) {
+  if (!/^\d{4}$/.test(expDate)) {
     throw new Error('Invalid expiration date format');
   }
 
-  if (paymentData.cardCode.length < 3 || paymentData.cardCode.length > 4) {
+  const cardCode = paymentData.cardCode.replace(/\D/g, '');
+  if (!/^\d{3,4}$/.test(cardCode)) {
     throw new Error('Invalid card security code');
   }
 }
