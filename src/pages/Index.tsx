@@ -85,6 +85,8 @@ const Index = () => {
         });
 
         if (signUpError) {
+          console.error('Sign up error:', signUpError);
+          
           if (signUpError.message.includes('User already registered')) {
             toast({
               title: "Account Exists",
@@ -93,7 +95,13 @@ const Index = () => {
             });
             return;
           }
-          throw signUpError;
+          
+          toast({
+            title: "Registration Failed",
+            description: "Unable to create account. Please try again.",
+            variant: "destructive",
+          });
+          return;
         }
 
         if (!signUpData.user) {
@@ -116,6 +124,7 @@ const Index = () => {
         if (signInError) {
           console.error('Sign in error:', signInError);
           
+          // Generic error message for invalid credentials
           if (signInError.message.includes('Invalid login credentials') || 
               signInError.message.includes('Email not confirmed')) {
             toast({
@@ -126,7 +135,13 @@ const Index = () => {
             return;
           }
 
-          throw signInError;
+          // Handle other potential errors
+          toast({
+            title: "Login Failed",
+            description: "An error occurred during login. Please try again.",
+            variant: "destructive",
+          });
+          return;
         }
       }
     } catch (error: any) {
