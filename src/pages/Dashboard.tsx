@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { AssessmentsList } from "@/components/dashboard/AssessmentsList";
+import { Loader } from "lucide-react";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
@@ -16,25 +17,47 @@ const Dashboard = () => {
   const location = useLocation();
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user data
-  const { data: userData } = useQuery({
-    queryKey: ['user'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+  // Check auth status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Auth check error:", error);
+          navigate("/");
+          return;
+        }
 
-      const isProvider = user.app_metadata?.is_provider === true;
-      
-      if (isProvider) {
-        navigate("/provider/dashboard");
-        return null;
+        if (!session) {
+          navigate("/");
+          return;
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        // Don't redirect on network errors, just log them
+        setIsLoading(false);
       }
+    };
 
-      return user;
-    },
-    retry: false
-  });
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT' || !session) {
+          navigate("/");
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Handle state from navigation
   useEffect(() => {
@@ -45,36 +68,6 @@ const Dashboard = () => {
       setShowAssessmentForm(false);
     }
   }, [location.state]);
-
-  const [formData, setFormData] = useState({
-    dateOfBirth: "",
-    gender: "",
-    cellPhone: "",
-    selectedConditions: [] as string[],
-    otherCondition: "",
-    medullaryThyroidCancer: "",
-    familyMtcHistory: "",
-    men2: "",
-    pregnantOrBreastfeeding: "",
-    weight: "",
-    heightFeet: "",
-    heightInches: "",
-    exerciseActivity: "",
-    takingMedications: "",
-    medicationsList: "",
-    previousGlp1: "",
-    recentGlp1: "",
-    hasAllergies: "",
-    allergiesList: "",
-    takingBloodThinners: "",
-    selectedMedication: "",
-    selectedPlan: "",
-    shippingAddress: "",
-    shippingCity: "",
-    shippingState: "",
-    shippingZip: "",
-    assessment: null
-  });
 
   const handleLogout = async () => {
     try {
@@ -104,6 +97,14 @@ const Dashboard = () => {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
