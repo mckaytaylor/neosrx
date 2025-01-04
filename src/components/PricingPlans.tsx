@@ -66,13 +66,6 @@ export const PricingPlans = ({
     ? "This is for the initial 3-month ramp-up. After that, the standard dose is 7.25 mg/week."
     : "This is for the initial 3-month ramp-up. After that, the standard dose is 1.25 mg/week.";
 
-  const handlePlanSelect = (plan: string) => {
-    // Format the plan type to match the database format (e.g., "1_month", "3_months")
-    const duration = plan.split(" ");
-    const formattedPlan = `${duration[0]}_${duration[1]}${parseInt(duration[0]) > 1 ? 's' : ''}`;
-    onPlanSelect(formattedPlan);
-  };
-
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-3 gap-6">
@@ -81,9 +74,9 @@ export const PricingPlans = ({
             key={plan.duration}
             className={cn(
               "relative cursor-pointer transition-all hover:shadow-lg",
-              selectedPlan === plan.duration.toLowerCase().replace(/\s+/g, '_') && "border-primary ring-2 ring-primary"
+              selectedPlan === plan.duration.toLowerCase() && "border-primary ring-2 ring-primary"
             )}
-            onClick={() => handlePlanSelect(plan.duration)}
+            onClick={() => onPlanSelect(plan.duration.toLowerCase())}
           >
             {index === 1 && (
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -94,7 +87,7 @@ export const PricingPlans = ({
             )}
             <CardHeader>
               <CardTitle className="text-lg">
-                {plan.duration} of medication
+                {plan.duration.split(" ")[0]} {parseInt(plan.duration) === 1 ? "month" : "months"} of medication
               </CardTitle>
             </CardHeader>
             <CardContent>

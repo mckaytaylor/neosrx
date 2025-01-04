@@ -9,32 +9,28 @@ interface PlanSelectionHandlerProps {
 export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerProps) => {
   const { toast } = useToast();
 
-  const prepareAssessmentData = (
-    userId: string,
-    medication: string,
-    plan: string,
-    amount: number,
-    formData: any
-  ) => {
-    const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
-    const weight = parseFloat(formData.weight);
-    const medicalConditions = Array.isArray(formData.selectedConditions) 
-      ? formData.selectedConditions 
-      : [];
-
-    const data = {
-      user_id: userId,
-      medication: medication.toLowerCase(),
-      plan_type: plan,
-      amount: amount,
-      medical_conditions: medicalConditions,
-      patient_height: isNaN(height) ? null : height,
-      patient_weight: isNaN(weight) ? null : weight,
-      status: 'draft' as const
+  const calculateAmount = (medication: string, plan: string): number | null => {
+    const amounts: Record<string, Record<string, number>> = {
+      tirzepatide: {
+        "1 month": 499,
+        "3 months": 810,
+        "5 months": 1300,
+      },
+      semaglutide: {
+        "1 month": 399,
+        "4 months": 640,
+        "7 months": 1050,
+      },
     };
 
-    console.log('Prepared assessment data:', data);
-    return data;
+    if (!medication || !amounts[medication] || !amounts[medication][plan]) {
+      console.error('Invalid amount calculation:', { medication, plan });
+      return null;
+    }
+
+    const calculatedAmount = amounts[medication][plan];
+    console.log('Calculated amount:', { medication, plan, amount: calculatedAmount });
+    return calculatedAmount;
   };
 
   const handlePlanSelect = async (plan: string) => {
@@ -49,45 +45,24 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      if (!plan || typeof plan !== 'string') {
-        throw new Error('Invalid plan selection');
-      }
-
-      const medication = formData.selectedMedication;
-      if (!medication || typeof medication !== 'string') {
-        throw new Error('Please select a medication first');
-      }
-
-      console.log('Processing plan selection:', { plan, medication }); // Debug log
-
-      // Calculate amount based on plan and medication
-      const amounts: Record<string, Record<string, number>> = {
-        tirzepatide: {
-          "1_month": 499,
-          "3_months": 810,
-          "5_months": 1300,
-        },
-        semaglutide: {
-          "1_month": 399,
-          "4_months": 640,
-          "7_months": 1050,
-        },
-      };
-
-      const formattedPlan = plan.toLowerCase();
-      const amount = amounts[medication.toLowerCase()]?.[formattedPlan];
+      const medication = formData.selectedMedication?.toLowerCase();
+      const amount = calculateAmount(medication, plan);
       
-      if (amount === undefined) {
-        throw new Error('Invalid plan and medication combination');
+      if (!amount) {
+        toast({
+          title: "Error",
+          description: "Invalid plan or medication selected",
+          variant: "destructive",
+        });
+        return;
       }
 
-      const assessmentData = prepareAssessmentData(
-        user.id,
-        medication,
-        formattedPlan,
-        amount,
-        formData
-      );
+      const medicalConditions = Array.isArray(formData.selectedConditions) 
+        ? formData.selectedConditions 
+        : [];
+
+      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
+      const weight = parseFloat(formData.weight);
 
       // First check if there's an existing draft
       const { data: existingDraft } = await supabase
@@ -97,10 +72,21 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         .eq('status', 'draft')
         .single();
 
+      const assessmentData = {
+        medication: medication,
+        plan_type: plan,
+        amount: amount, // This is now guaranteed to be a valid number
+        medical_conditions: medicalConditions,
+        patient_height: isNaN(height) ? null : height,
+        patient_weight: isNaN(weight) ? null : weight,
+        status: 'draft' as const
+      };
+
       console.log('Saving assessment with data:', assessmentData);
 
       let data;
       if (existingDraft) {
+        // Update existing draft
         const { data: updatedData, error: updateError } = await supabase
           .from('assessments')
           .update(assessmentData)
@@ -111,9 +97,13 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         if (updateError) throw updateError;
         data = updatedData;
       } else {
+        // Create new draft
         const { data: newData, error: insertError } = await supabase
           .from('assessments')
-          .insert(assessmentData)
+          .insert({
+            ...assessmentData,
+            user_id: user.id
+          })
           .select()
           .single();
 
@@ -126,7 +116,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       }
 
       console.log('Assessment saved successfully:', data);
-      onSuccess(formattedPlan, data.id);
+      onSuccess(plan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({

@@ -46,12 +46,6 @@ export const AssessmentsList = () => {
     }
   };
 
-  const formatPlanType = (planType: string) => {
-    if (!planType) return '';
-    const [duration, period] = planType.split('_');
-    return `${duration} ${period}`;
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -92,7 +86,7 @@ export const AssessmentsList = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Plan:</span>
-                    <span className="font-medium">{formatPlanType(assessment.plan_type)}</span>
+                    <span className="font-medium">{assessment.plan_type}</span>
                   </div>
                   {assessment.status === "draft" && (
                     <Button 

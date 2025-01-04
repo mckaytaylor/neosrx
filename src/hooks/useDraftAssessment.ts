@@ -50,8 +50,8 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
             hasAllergies: assessment.has_allergies?.toString() || "",
             allergiesList: assessment.allergies_list || "",
             takingBloodThinners: assessment.taking_blood_thinners?.toString() || "",
-            selectedMedication: assessment.medication || "semaglutide", // Default medication changed to semaglutide
-            selectedPlan: assessment.plan_type || "4_months", // Default plan changed to 4_months
+            selectedMedication: assessment.medication || "",
+            selectedPlan: assessment.plan_type || "",
             shippingAddress: assessment.shipping_address || "",
             shippingCity: assessment.shipping_city || "",
             shippingState: assessment.shipping_state || "",
@@ -77,7 +77,6 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
         const weight = parseFloat(formData.weight);
 
-        // Only proceed if we have some data to save
         if (!formData.selectedConditions?.length && !formData.weight && !formData.heightFeet) {
           return;
         }
@@ -103,14 +102,14 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           has_allergies: formData.hasAllergies === "yes",
           allergies_list: formData.allergiesList || null,
           taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || "semaglutide", // Default medication changed to semaglutide
-          plan_type: formData.selectedPlan || "4_months", // Default plan changed to 4_months
+          medication: formData.selectedMedication || null,
+          plan_type: formData.selectedPlan || null,
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
           shipping_zip: formData.shippingZip || null,
           status: 'draft' as const,
-          amount: 640 // Default amount updated for 4_months semaglutide plan
+          amount: 0
         };
 
         if (draftAssessmentId) {
