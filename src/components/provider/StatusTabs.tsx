@@ -4,7 +4,7 @@ import { Assessment } from "./types"
 
 interface StatusTabsProps {
   assessments: Assessment[]
-  onStatusUpdate: (assessmentId: string, newStatus: "prescribed" | "denied" | "completed") => Promise<void>
+  onStatusUpdate: (assessmentId: string, newStatus: "prescribed" | "denied" | "completed", denialReason?: string) => Promise<void>
 }
 
 export const StatusTabs = ({ assessments, onStatusUpdate }: StatusTabsProps) => {

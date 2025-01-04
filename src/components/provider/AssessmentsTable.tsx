@@ -16,7 +16,7 @@ import { AssessmentActions } from "./AssessmentActions"
 interface AssessmentsTableProps {
   assessments: Assessment[]
   showActions?: boolean
-  onStatusUpdate?: (assessmentId: string, newStatus: "prescribed" | "denied" | "completed") => Promise<void>
+  onStatusUpdate?: (assessmentId: string, newStatus: "prescribed" | "denied" | "completed", denialReason?: string) => Promise<void>
 }
 
 export const AssessmentsTable = ({ 
@@ -39,10 +39,10 @@ export const AssessmentsTable = ({
     }
   }
 
-  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied" | "completed") => {
+  const handleStatusUpdate = async (assessmentId: string, newStatus: "prescribed" | "denied" | "completed", denialReason?: string) => {
     try {
       if (onStatusUpdate) {
-        await onStatusUpdate(assessmentId, newStatus)
+        await onStatusUpdate(assessmentId, newStatus, denialReason)
         toast({
           title: "Status Updated",
           description: `Assessment has been ${newStatus}.`,
@@ -104,7 +104,9 @@ export const AssessmentsTable = ({
                   <TableCell>
                     <AssessmentActions 
                       status={assessment.status}
-                      onStatusUpdate={(newStatus) => handleStatusUpdate(assessment.id, newStatus)}
+                      onStatusUpdate={(newStatus, denialReason) => 
+                        handleStatusUpdate(assessment.id, newStatus, denialReason)
+                      }
                     />
                   </TableCell>
                 )}
