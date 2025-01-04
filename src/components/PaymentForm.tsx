@@ -104,8 +104,13 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
         .eq('id', subscriptionId)
         .single();
 
-      if (assessmentError || !assessment) {
+      if (assessmentError) {
         console.error('Assessment fetch error:', assessmentError);
+        throw new Error("Assessment not found");
+      }
+
+      if (!assessment) {
+        console.error('Assessment not found');
         throw new Error("Assessment not found");
       }
 
@@ -133,6 +138,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
             cardNumber: cleanCardNumber,
           },
           subscriptionId,
+          amount: assessment.amount, // Explicitly pass the amount
         },
       });
 
