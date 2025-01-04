@@ -63,8 +63,8 @@ export const PricingPlans = ({
 
   const currentPlans = plans[selectedMedication.toLowerCase()];
   const disclaimer = selectedMedication.toLowerCase() === "tirzepatide"
-    ? "This is for the initial 3-month ramp-up. After that, the standard dose is 7.25 mg/week."
-    : "This is for the initial 3-month ramp-up. After that, the standard dose is 1.25 mg/week.";
+    ? "This is for the initial ramp-up schedule. After that, the standard dose is 7.25 mg/week."
+    : "This is for the initial ramp-up schedule. After that, the standard dose is 1.25 mg/week.";
 
   return (
     <div className="space-y-6">
