@@ -3,26 +3,39 @@ export const validateCardNumber = (cardNumber: string): boolean => {
   
   // Special handling for test card
   if (cleanNumber === '4111111111111111') {
+    console.log('Test card detected - validation passed');
     return true;
   }
   
-  return /^\d{15,16}$/.test(cleanNumber);
+  // Regular validation for non-test cards
+  const isValid = /^\d{15,16}$/.test(cleanNumber);
+  console.log('Card validation result:', { isValid, length: cleanNumber.length });
+  return isValid;
 };
 
 export const validateExpirationDate = (expDate: string): boolean => {
   const [month, year] = expDate.split('/');
-  if (!month || !year) return false;
+  if (!month || !year) {
+    console.log('Invalid expiration date format');
+    return false;
+  }
 
   const currentDate = new Date();
   const expiration = new Date(parseInt(`20${year}`), parseInt(month) - 1);
-  return expiration > currentDate;
+  const isValid = expiration > currentDate;
+  console.log('Expiration validation result:', { isValid, expDate });
+  return isValid;
 };
 
 export const validateCardCode = (code: string): boolean => {
-  return /^\d{3,4}$/.test(code);
+  const isValid = /^\d{3,4}$/.test(code);
+  console.log('CVV validation result:', { isValid, length: code.length });
+  return isValid;
 };
 
 export const getErrorMessage = (error: any): string => {
+  console.log('Payment error details:', error);
+  
   const errorMessage = error?.message?.toLowerCase() || '';
   
   if (errorMessage.includes('card number format')) {
