@@ -98,6 +98,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     setIsProcessing(true);
 
     try {
+      // First, verify the assessment exists and has a valid amount
       const { data: assessment, error: assessmentError } = await supabase
         .from('assessments')
         .select('*')
@@ -114,6 +115,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
         throw new Error("Assessment not found");
       }
 
+      // Validate the amount before proceeding
       if (!assessment.amount || assessment.amount <= 0) {
         console.error('Invalid assessment amount:', assessment);
         throw new Error("Invalid assessment amount");
@@ -131,6 +133,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
         throw new Error("No active session");
       }
 
+      // Process the payment with the validated amount
       const response = await supabase.functions.invoke('process-payment', {
         body: {
           paymentData: {
@@ -138,7 +141,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
             cardNumber: cleanCardNumber,
           },
           subscriptionId,
-          amount: assessment.amount, // Explicitly pass the amount
+          amount: assessment.amount,
         },
       });
 
