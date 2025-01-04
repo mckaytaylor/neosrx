@@ -154,7 +154,17 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
       }
 
       // Update assessment status to completed after successful payment
-      await updateAssessmentStatus(subscriptionId, 'completed');
+      const { error: updateError } = await supabase
+        .from('assessments')
+        .update({ status: 'completed' })
+        .eq('id', subscriptionId);
+
+      if (updateError) {
+        console.error('Error updating assessment status:', updateError);
+        throw new Error("Failed to update assessment status");
+      }
+
+      console.log('Successfully updated assessment status to completed');
 
       toast({
         title: "Payment Successful",
