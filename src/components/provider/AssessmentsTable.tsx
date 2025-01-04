@@ -67,54 +67,53 @@ export const AssessmentsTable = ({
               <TableHead>Plan Type</TableHead>
               <TableHead>Medication</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Denial Reason</TableHead>
               <TableHead>Submission Date</TableHead>
               {showActions && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {assessments?.map((assessment) => (
-              <>
-                <TableRow key={assessment.id}>
-                  <TableCell>
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto font-normal"
-                      onClick={() => handlePatientSelect(assessment.user_id)}
-                    >
-                      {assessment.profiles?.first_name} {assessment.profiles?.last_name}
-                    </Button>
-                  </TableCell>
-                  <TableCell>{assessment.plan_type}</TableCell>
-                  <TableCell>{assessment.medication}</TableCell>
-                  <TableCell>
-                    <div className="capitalize">{assessment.status}</div>
-                  </TableCell>
-                  <TableCell>
-                    {assessment.created_at
-                      ? new Date(assessment.created_at).toLocaleDateString()
-                      : "N/A"}
-                  </TableCell>
-                  {showActions && (
-                    <TableCell>
-                      <AssessmentActions 
-                        status={assessment.status}
-                        onStatusUpdate={(newStatus, denialReason) => 
-                          handleStatusUpdate(assessment.id, newStatus, denialReason)
-                        }
-                      />
-                    </TableCell>
+              <TableRow key={assessment.id}>
+                <TableCell>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-normal"
+                    onClick={() => handlePatientSelect(assessment.user_id)}
+                  >
+                    {assessment.profiles?.first_name} {assessment.profiles?.last_name}
+                  </Button>
+                </TableCell>
+                <TableCell>{assessment.plan_type}</TableCell>
+                <TableCell>{assessment.medication}</TableCell>
+                <TableCell>
+                  <div className="capitalize">{assessment.status}</div>
+                </TableCell>
+                <TableCell>
+                  {assessment.status === "denied" && assessment.denial_reason ? (
+                    <div className="text-sm text-muted-foreground">
+                      {assessment.denial_reason}
+                    </div>
+                  ) : (
+                    "-"
                   )}
-                </TableRow>
-                {assessment.status === "denied" && assessment.denial_reason && (
-                  <TableRow key={`${assessment.id}-denial`} className="bg-muted/30">
-                    <TableCell colSpan={6} className="py-2">
-                      <div className="text-sm text-muted-foreground">
-                        <span className="font-medium">Denial Reason:</span> {assessment.denial_reason}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                </TableCell>
+                <TableCell>
+                  {assessment.created_at
+                    ? new Date(assessment.created_at).toLocaleDateString()
+                    : "N/A"}
+                </TableCell>
+                {showActions && (
+                  <TableCell>
+                    <AssessmentActions 
+                      status={assessment.status}
+                      onStatusUpdate={(newStatus, denialReason) => 
+                        handleStatusUpdate(assessment.id, newStatus, denialReason)
+                      }
+                    />
+                  </TableCell>
                 )}
-              </>
+              </TableRow>
             ))}
           </TableBody>
         </Table>
