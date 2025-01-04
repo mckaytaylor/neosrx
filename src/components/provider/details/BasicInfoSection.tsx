@@ -1,7 +1,7 @@
-import { Assessment } from "../types"
+import { Assessment } from "../types";
 
 interface BasicInfoSectionProps {
-  assessment: Assessment
+  assessment: Assessment;
 }
 
 export const BasicInfoSection = ({ assessment }: BasicInfoSectionProps) => {
@@ -30,6 +30,32 @@ export const BasicInfoSection = ({ assessment }: BasicInfoSectionProps) => {
           <p className="capitalize">{assessment.gender || 'Not provided'}</p>
         </div>
       </div>
+
+      <div className="mt-6">
+        <h4 className="text-md font-semibold mb-2">UTM Parameters</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Source</p>
+            <p>{assessment.utm_source || 'Not provided'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Medium</p>
+            <p>{assessment.utm_medium || 'Not provided'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Campaign</p>
+            <p>{assessment.utm_campaign || 'Not provided'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Term</p>
+            <p>{assessment.utm_term || 'Not provided'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Content</p>
+            <p>{assessment.utm_content || 'Not provided'}</p>
+          </div>
+        </div>
+      </div>
     </div>
-  )
-}
+  );
+};

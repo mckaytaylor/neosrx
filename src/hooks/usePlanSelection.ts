@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { calculateAmount } from "@/utils/pricingUtils";
+import { getUtmParams } from "@/utils/utmUtils";
 
 interface PlanSelectionHandlerProps {
   formData: any;
@@ -37,6 +38,29 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
 
       console.log('Selected plan pricing:', { medication, plan, amount });
 
+      // Get current UTM parameters or fetch from profile if none present
+      const currentUtmParams = getUtmParams();
+      let utmParams = currentUtmParams;
+
+      // If no current UTM parameters, fetch from profile
+      if (!Object.values(currentUtmParams).some(value => value !== null)) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('utm_source, utm_medium, utm_campaign, utm_term, utm_content')
+          .eq('id', user.id)
+          .single();
+
+        if (profileData) {
+          utmParams = {
+            utm_source: profileData.utm_source,
+            utm_medium: profileData.utm_medium,
+            utm_campaign: profileData.utm_campaign,
+            utm_term: profileData.utm_term,
+            utm_content: profileData.utm_content,
+          };
+        }
+      }
+
       // First check if there's an existing draft
       const { data: existingDraft } = await supabase
         .from('assessments')
@@ -72,6 +96,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         shipping_city: formData.shippingCity || null,
         shipping_state: formData.shippingState || null,
         shipping_zip: formData.shippingZip || null,
+        ...utmParams
       };
 
       if (existingDraft) {

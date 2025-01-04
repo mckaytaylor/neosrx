@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Hero } from "@/components/landing/Hero";
 import { AuthSection } from "@/components/landing/AuthSection";
+import { getUtmParams } from "@/utils/utmUtils";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -81,6 +82,7 @@ const Index = () => {
       setIsSubmitting(true);
 
       if (authMode === "register") {
+        const utmParams = getUtmParams();
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
@@ -88,6 +90,7 @@ const Index = () => {
             data: {
               first_name: data.firstName,
               last_name: data.lastName,
+              ...utmParams
             }
           }
         });
@@ -132,7 +135,6 @@ const Index = () => {
         if (signInError) {
           console.error('Sign in error:', signInError);
           
-          // For any authentication error, show a generic message
           toast({
             title: "Login Failed",
             description: "Incorrect email or password. Please try again or reset your password.",
