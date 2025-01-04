@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { AssessmentFormData } from "@/types/assessment";
 
-export const useLoadDraftAssessment = (setFormData: (data: any) => void) => {
+export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) => void) => {
   const [draftAssessmentId, setDraftAssessmentId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -28,8 +29,7 @@ export const useLoadDraftAssessment = (setFormData: (data: any) => void) => {
         if (assessment) {
           console.log('Found draft assessment:', assessment);
           setDraftAssessmentId(assessment.id);
-          setFormData(prevData => ({
-            ...prevData,
+          setFormData({
             dateOfBirth: assessment.date_of_birth || "",
             gender: assessment.gender || "",
             cellPhone: assessment.cell_phone || "",
@@ -56,7 +56,8 @@ export const useLoadDraftAssessment = (setFormData: (data: any) => void) => {
             shippingCity: assessment.shipping_city || "",
             shippingState: assessment.shipping_state || "",
             shippingZip: assessment.shipping_zip || "",
-          }));
+            assessment: null
+          });
         } else {
           console.log('No draft assessment found');
           // Only create a new draft if explicitly requested via state
