@@ -34,6 +34,15 @@ export const useAssessmentManagement = () => {
         return null;
       }
 
+      console.log('Saving assessment with data:', {
+        medication,
+        plan_type: plan,
+        amount,
+        medical_conditions: formData.selectedConditions,
+        patient_height: formData.heightFeet ? parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0') : null,
+        patient_weight: formData.weight ? parseInt(formData.weight) : null
+      });
+
       const medicalConditions = Array.isArray(formData.selectedConditions) 
         ? formData.selectedConditions 
         : [];
@@ -57,8 +66,6 @@ export const useAssessmentManagement = () => {
         patient_height: isNaN(height) ? null : height,
         patient_weight: isNaN(weight) ? null : weight,
       };
-
-      console.log('Saving assessment with data:', assessmentData);
 
       if (existingDraft) {
         const { data, error } = await supabase
