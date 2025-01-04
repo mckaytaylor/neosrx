@@ -109,6 +109,7 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
 
       console.log('Payment processed successfully, updating assessment status');
 
+      // Update assessment status to completed
       const { error: updateError } = await supabase
         .from('assessments')
         .update({ status: 'completed' })
