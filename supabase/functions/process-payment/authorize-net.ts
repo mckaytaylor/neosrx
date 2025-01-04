@@ -6,9 +6,21 @@ export async function processAuthorizeNetPayment(
   authLoginId: string,
   transactionKey: string
 ): Promise<AuthorizeNetResponse> {
+  console.log('Processing payment with Authorize.net:', {
+    assessmentId: assessment.id,
+    amount: assessment.amount,
+    medication: assessment.medication,
+    plan: assessment.plan_type
+  });
+
   const expDate = paymentData.expirationDate.replace(/\D/g, '');
   const shortRefId = assessment.id.substring(0, 20);
   const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
+
+  // Validate test card for development
+  if (Deno.env.get('ENVIRONMENT') === 'development' && cardNumber === '4111111111111111') {
+    console.log('Using test card in development environment');
+  }
 
   const paymentRequest = {
     createTransactionRequest: {
@@ -66,7 +78,12 @@ export async function processAuthorizeNetPayment(
 }
 
 export function validatePaymentResponse(response: AuthorizeNetResponse): void {
-  if (response.messages?.resultCode !== "Ok") {
+  if (!response.messages || !response.transactionResponse) {
+    console.error('Invalid payment response structure:', response);
+    throw new Error('Invalid payment response from processor');
+  }
+
+  if (response.messages.resultCode !== "Ok") {
     const errorMessage = response.messages?.message?.[0]?.text || 
                         response.transactionResponse?.errors?.[0]?.errorText ||
                         'Payment processing failed';
