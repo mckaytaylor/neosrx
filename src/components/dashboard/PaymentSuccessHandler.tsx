@@ -8,9 +8,32 @@ export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSu
   
   const handlePaymentSuccess = async (assessmentId: string) => {
     try {
+      // Update the assessment status to completed
       const { data, error } = await supabase
         .from("assessments")
-        .update({ status: "completed" })
+        .update({ 
+          status: "completed",
+          // Ensure all form data is properly saved on completion
+          date_of_birth: formData.dateOfBirth || null,
+          gender: formData.gender || null,
+          cell_phone: formData.cellPhone || null,
+          medical_conditions: Array.isArray(formData.selectedConditions) ? formData.selectedConditions : [],
+          other_medical_conditions: formData.otherCondition || null,
+          patient_height: parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0'),
+          patient_weight: parseFloat(formData.weight) || null,
+          medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes",
+          family_mtc_history: formData.familyMtcHistory === "yes",
+          men2: formData.men2 === "yes",
+          pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes",
+          exercise_activity: formData.exerciseActivity || null,
+          taking_medications: formData.takingMedications === "yes",
+          medications_list: formData.medicationsList || null,
+          previous_glp1: formData.previousGlp1 === "yes",
+          recent_glp1: formData.recentGlp1 === "yes",
+          has_allergies: formData.hasAllergies === "yes",
+          allergies_list: formData.allergiesList || null,
+          taking_blood_thinners: formData.takingBloodThinners === "yes"
+        })
         .eq("id", assessmentId)
         .select()
         .single();

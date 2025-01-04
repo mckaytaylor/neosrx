@@ -21,67 +21,85 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const amounts: Record<string, Record<string, number>> = {
-        tirzepatide: {
-          "1 month": 499,
-          "3 months": 810,
-          "5 months": 1300,
-        },
-        semaglutide: {
-          "1 month": 399,
-          "4 months": 640,
-          "7 months": 1050,
-        },
-      };
+      // First check if there's an existing draft
+      const { data: existingDraft } = await supabase
+        .from('assessments')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'draft')
+        .single();
 
-      const medication = formData.selectedMedication?.toLowerCase();
-      if (!medication || !amounts[medication]) {
-        toast({
-          title: "Error",
-          description: "Invalid medication selected",
-          variant: "destructive",
-        });
+      if (existingDraft) {
+        // Update existing draft instead of creating a new one
+        const { data, error } = await supabase
+          .from('assessments')
+          .update({
+            medication: formData.selectedMedication?.toLowerCase(),
+            plan_type: plan,
+            amount: calculateAmount(formData.selectedMedication?.toLowerCase(), plan),
+            medical_conditions: Array.isArray(formData.selectedConditions) ? formData.selectedConditions : [],
+            patient_height: calculateHeight(formData.heightFeet, formData.heightInches),
+            patient_weight: parseFloat(formData.weight) || null,
+            date_of_birth: formData.dateOfBirth || null,
+            gender: formData.gender || null,
+            cell_phone: formData.cellPhone || null,
+            other_medical_conditions: formData.otherCondition || null,
+            medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes",
+            family_mtc_history: formData.familyMtcHistory === "yes",
+            men2: formData.men2 === "yes",
+            pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes",
+            exercise_activity: formData.exerciseActivity || null,
+            taking_medications: formData.takingMedications === "yes",
+            medications_list: formData.medicationsList || null,
+            previous_glp1: formData.previousGlp1 === "yes",
+            recent_glp1: formData.recentGlp1 === "yes",
+            has_allergies: formData.hasAllergies === "yes",
+            allergies_list: formData.allergiesList || null,
+            taking_blood_thinners: formData.takingBloodThinners === "yes",
+          })
+          .eq('id', existingDraft.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) onSuccess(plan, data.id);
         return;
       }
 
-      const amount = amounts[medication][plan];
-      if (amount === undefined) {
-        toast({
-          title: "Error",
-          description: "Invalid plan selected",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const medicalConditions = Array.isArray(formData.selectedConditions) 
-        ? formData.selectedConditions 
-        : [];
-
-      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
-      const weight = parseInt(formData.weight);
-
+      // If no existing draft, create a new one
       const { data, error } = await supabase
         .from('assessments')
         .insert({
           user_id: user.id,
-          medication: medication,
+          medication: formData.selectedMedication?.toLowerCase(),
           plan_type: plan,
-          amount: amount,
-          medical_conditions: medicalConditions,
-          patient_height: height || null,
-          patient_weight: weight || null,
+          amount: calculateAmount(formData.selectedMedication?.toLowerCase(), plan),
+          medical_conditions: Array.isArray(formData.selectedConditions) ? formData.selectedConditions : [],
+          patient_height: calculateHeight(formData.heightFeet, formData.heightInches),
+          patient_weight: parseFloat(formData.weight) || null,
+          date_of_birth: formData.dateOfBirth || null,
+          gender: formData.gender || null,
+          cell_phone: formData.cellPhone || null,
+          other_medical_conditions: formData.otherCondition || null,
+          medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes",
+          family_mtc_history: formData.familyMtcHistory === "yes",
+          men2: formData.men2 === "yes",
+          pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes",
+          exercise_activity: formData.exerciseActivity || null,
+          taking_medications: formData.takingMedications === "yes",
+          medications_list: formData.medicationsList || null,
+          previous_glp1: formData.previousGlp1 === "yes",
+          recent_glp1: formData.recentGlp1 === "yes",
+          has_allergies: formData.hasAllergies === "yes",
+          allergies_list: formData.allergiesList || null,
+          taking_blood_thinners: formData.takingBloodThinners === "yes",
           status: 'draft'
         })
         .select()
         .single();
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
-      }
-
-      onSuccess(plan, data.id);
+      if (error) throw error;
+      if (data) onSuccess(plan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({
@@ -90,6 +108,34 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         variant: "destructive",
       });
     }
+  };
+
+  const calculateAmount = (medication: string, plan: string): number => {
+    const amounts: Record<string, Record<string, number>> = {
+      tirzepatide: {
+        "1 month": 499,
+        "3 months": 810,
+        "5 months": 1300,
+      },
+      semaglutide: {
+        "1 month": 399,
+        "4 months": 640,
+        "7 months": 1050,
+      },
+    };
+
+    if (!medication || !amounts[medication] || !amounts[medication][plan]) {
+      throw new Error("Invalid medication or plan selected");
+    }
+
+    return amounts[medication][plan];
+  };
+
+  const calculateHeight = (feet: string, inches: string): number | null => {
+    const feetNum = parseInt(feet);
+    const inchesNum = parseInt(inches || '0');
+    if (isNaN(feetNum)) return null;
+    return feetNum * 12 + (isNaN(inchesNum) ? 0 : inchesNum);
   };
 
   return { handlePlanSelect };
