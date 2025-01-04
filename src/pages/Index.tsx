@@ -11,6 +11,7 @@ const Index = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showVerificationAlert, setShowVerificationAlert] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [showResetPassword, setShowResetPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,6 +33,32 @@ const Index = () => {
   const handleLoginClick = () => {
     setShowAuth(true);
     setAuthMode("login");
+  };
+
+  const handleResetPassword = async (email: string) => {
+    try {
+      setIsSubmitting(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for the password reset link.",
+      });
+      setShowResetPassword(false);
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      toast({
+        title: "Error",
+        description: "Unable to send reset password email. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAuthSubmit = async (data: { 
@@ -89,19 +116,11 @@ const Index = () => {
         if (signInError) {
           console.error('Sign in error:', signInError);
           
-          if (signInError.message.includes('Invalid login credentials')) {
+          if (signInError.message.includes('Invalid login credentials') || 
+              signInError.message.includes('Email not confirmed')) {
             toast({
               title: "Login Failed",
-              description: "The email or password you entered is incorrect. Please try again.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (signInError.message.includes('Email not confirmed')) {
-            toast({
-              title: "Email Not Verified",
-              description: "Please check your email and verify your account before signing in.",
+              description: "Incorrect email or password. Please try again or reset your password.",
               variant: "destructive",
             });
             return;
@@ -135,6 +154,9 @@ const Index = () => {
             authMode={authMode}
             onSubmit={handleAuthSubmit}
             onToggleMode={() => setAuthMode(authMode === "login" ? "register" : "login")}
+            onResetPassword={handleResetPassword}
+            showResetPassword={showResetPassword}
+            onToggleResetPassword={() => setShowResetPassword(!showResetPassword)}
           />
         )}
       </div>

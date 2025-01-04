@@ -2,16 +2,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthFormProps {
   mode: "login" | "register";
   onSubmit: (data: { email: string; password: string; firstName?: string; lastName?: string }) => void;
   onToggleMode: () => void;
   disabled?: boolean;
+  onResetPassword: (email: string) => void;
+  showResetPassword: boolean;
+  onToggleResetPassword: () => void;
 }
 
-export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormProps) => {
+export const AuthForm = ({ 
+  mode, 
+  onSubmit, 
+  onToggleMode, 
+  disabled,
+  onResetPassword,
+  showResetPassword,
+  onToggleResetPassword,
+}: AuthFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -21,6 +32,19 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (showResetPassword) {
+      if (!email) {
+        toast({
+          title: "Missing Email",
+          description: "Please enter your email address",
+          variant: "destructive",
+        });
+        return;
+      }
+      onResetPassword(email);
+      return;
+    }
+
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -54,6 +78,39 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
 
     onSubmit({ email, password, firstName, lastName });
   };
+
+  if (showResetPassword) {
+    return (
+      <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            disabled={disabled}
+            required
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={disabled}>
+          Send Reset Link
+        </Button>
+        <p className="text-center text-sm text-gray-600">
+          Remember your password?{" "}
+          <button
+            type="button"
+            onClick={onToggleResetPassword}
+            className="text-primary hover:underline"
+            disabled={disabled}
+          >
+            Sign in
+          </button>
+        </p>
+      </form>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md">
@@ -113,17 +170,29 @@ export const AuthForm = ({ mode, onSubmit, onToggleMode, disabled }: AuthFormPro
       <Button type="submit" className="w-full" disabled={disabled}>
         {mode === "login" ? "Sign In" : "Create Account"}
       </Button>
-      <p className="text-center text-sm text-gray-600">
-        {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-        <button
-          type="button"
-          onClick={onToggleMode}
-          className="text-primary hover:underline"
-          disabled={disabled}
-        >
-          {mode === "login" ? "Sign up" : "Sign in"}
-        </button>
-      </p>
+      <div className="space-y-2 text-center text-sm text-gray-600">
+        {mode === "login" && (
+          <button
+            type="button"
+            onClick={onToggleResetPassword}
+            className="text-primary hover:underline block w-full"
+            disabled={disabled}
+          >
+            Forgot password?
+          </button>
+        )}
+        <p>
+          {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+          <button
+            type="button"
+            onClick={onToggleMode}
+            className="text-primary hover:underline"
+            disabled={disabled}
+          >
+            {mode === "login" ? "Sign up" : "Sign in"}
+          </button>
+        </p>
+      </div>
     </form>
   );
 };

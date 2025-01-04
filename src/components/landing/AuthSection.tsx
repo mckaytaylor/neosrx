@@ -9,6 +9,9 @@ interface AuthSectionProps {
   authMode: "login" | "register";
   onSubmit: (data: { email: string; password: string; firstName?: string; lastName?: string }) => void;
   onToggleMode: () => void;
+  onResetPassword: (email: string) => void;
+  showResetPassword: boolean;
+  onToggleResetPassword: () => void;
 }
 
 export const AuthSection = ({
@@ -18,6 +21,9 @@ export const AuthSection = ({
   authMode,
   onSubmit,
   onToggleMode,
+  onResetPassword,
+  showResetPassword,
+  onToggleResetPassword,
 }: AuthSectionProps) => {
   return (
     <div className="max-w-md mx-auto space-y-8">
@@ -33,13 +39,20 @@ export const AuthSection = ({
       )}
       <div className="bg-white p-8 rounded-lg shadow-lg border border-[#8BA89F]/10">
         <h2 className="text-2xl font-semibold text-[#8BA89F] mb-6 text-center">
-          {authMode === "login" ? "Welcome Back" : "Create Your Account"}
+          {showResetPassword 
+            ? "Reset Password"
+            : authMode === "login" 
+              ? "Welcome Back" 
+              : "Create Your Account"}
         </h2>
         <AuthForm
           mode={authMode}
           onSubmit={onSubmit}
           onToggleMode={onToggleMode}
           disabled={isSubmitting}
+          onResetPassword={onResetPassword}
+          showResetPassword={showResetPassword}
+          onToggleResetPassword={onToggleResetPassword}
         />
       </div>
     </div>
