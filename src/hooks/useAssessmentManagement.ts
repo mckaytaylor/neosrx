@@ -11,6 +11,8 @@ interface AssessmentData {
   patient_weight: number | null;
 }
 
+type AssessmentStatus = "draft" | "completed" | "prescribed" | "denied";
+
 export const useAssessmentManagement = () => {
   const { toast } = useToast();
 
@@ -93,19 +95,23 @@ export const useAssessmentManagement = () => {
     }
   };
 
-  const updateAssessmentStatus = async (assessmentId: string, status: string) => {
+  const updateAssessmentStatus = async (assessmentId: string, status: AssessmentStatus) => {
     try {
-      const { error } = await supabase
+      console.log(`Updating assessment status for ID: ${assessmentId} to ${status}`);
+      
+      const { data, error } = await supabase
         .from('assessments')
         .update({ status })
-        .eq('id', assessmentId);
+        .eq('id', assessmentId)
+        .select()
+        .single();
 
       if (error) {
         console.error('Error updating assessment status:', error);
         throw new Error("Failed to update assessment status");
       }
 
-      console.log(`Assessment ${assessmentId} status updated to ${status}`);
+      console.log('Successfully updated assessment:', data);
     } catch (error: any) {
       console.error("Error updating assessment status:", error);
       throw error;
