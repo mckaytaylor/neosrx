@@ -16,11 +16,26 @@ serve(async (req) => {
     // Parse request body
     const { paymentData, subscriptionId } = await req.json()
     
-    console.log('Processing payment request:', { subscriptionId })
+    console.log('Processing payment request:', { 
+      subscriptionId,
+      cardNumberLength: paymentData?.cardNumber?.length,
+      hasExpDate: !!paymentData?.expirationDate,
+      hasCardCode: !!paymentData?.cardCode
+    })
     
-    if (!paymentData || !subscriptionId) {
-      console.error('Missing required data:', { paymentData: !!paymentData, subscriptionId: !!subscriptionId })
-      throw new Error('Missing required payment data or subscription ID')
+    // Validate required fields
+    if (!paymentData?.cardNumber || !paymentData?.expirationDate || !paymentData?.cardCode) {
+      console.error('Missing required payment fields:', { 
+        hasCardNumber: !!paymentData?.cardNumber,
+        hasExpDate: !!paymentData?.expirationDate,
+        hasCardCode: !!paymentData?.cardCode
+      })
+      throw new Error('Missing required payment information')
+    }
+
+    if (!subscriptionId) {
+      console.error('Missing subscription ID')
+      throw new Error('Missing subscription ID')
     }
 
     // Initialize Supabase client
@@ -46,7 +61,12 @@ serve(async (req) => {
       throw new Error('Assessment not found')
     }
 
-    console.log('Found assessment:', { id: assessment.id, amount: assessment.amount })
+    console.log('Found assessment:', { 
+      id: assessment.id, 
+      amount: assessment.amount,
+      medication: assessment.medication,
+      plan_type: assessment.plan_type
+    })
 
     // Get Authorize.net credentials
     const authLoginId = Deno.env.get('AUTHORIZENET_API_LOGIN_ID')
@@ -61,6 +81,19 @@ serve(async (req) => {
     const expDate = paymentData.expirationDate.replace(/\D/g, '')
     const shortRefId = subscriptionId.substring(0, 20)
     const cardNumber = paymentData.cardNumber.replace(/\s/g, '')
+
+    // Validate card data format
+    if (cardNumber.length < 15 || cardNumber.length > 16) {
+      throw new Error('Invalid card number format')
+    }
+
+    if (expDate.length !== 4) {
+      throw new Error('Invalid expiration date format')
+    }
+
+    if (paymentData.cardCode.length < 3 || paymentData.cardCode.length > 4) {
+      throw new Error('Invalid card security code')
+    }
 
     console.log('Preparing payment request for amount:', assessment.amount)
 
@@ -111,7 +144,8 @@ serve(async (req) => {
     const paymentResponse = await response.json()
     console.log('Payment response received:', {
       resultCode: paymentResponse.messages?.resultCode,
-      responseCode: paymentResponse.transactionResponse?.responseCode
+      responseCode: paymentResponse.transactionResponse?.responseCode,
+      errors: paymentResponse.transactionResponse?.errors || paymentResponse.messages?.message
     })
 
     // Check for specific error conditions
