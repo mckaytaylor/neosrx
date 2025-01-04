@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import ProviderLogin from "./pages/ProviderLogin";
 import ProviderDashboard from "./components/ProviderDashboard";
+import ResetPassword from "./components/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/provider-login" element={<ProviderLogin />} />
           <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
