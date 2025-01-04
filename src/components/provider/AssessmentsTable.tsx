@@ -73,44 +73,48 @@ export const AssessmentsTable = ({
           </TableHeader>
           <TableBody>
             {assessments?.map((assessment) => (
-              <TableRow key={assessment.id}>
-                <TableCell>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-normal"
-                    onClick={() => handlePatientSelect(assessment.user_id)}
-                  >
-                    {assessment.profiles?.first_name} {assessment.profiles?.last_name}
-                  </Button>
-                </TableCell>
-                <TableCell>{assessment.plan_type}</TableCell>
-                <TableCell>{assessment.medication}</TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <div className="capitalize">{assessment.status}</div>
-                    {assessment.status === "denied" && assessment.denial_reason && (
-                      <div className="text-sm text-muted-foreground">
-                        Reason: {assessment.denial_reason}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {assessment.created_at
-                    ? new Date(assessment.created_at).toLocaleDateString()
-                    : "N/A"}
-                </TableCell>
-                {showActions && (
+              <>
+                <TableRow key={assessment.id}>
                   <TableCell>
-                    <AssessmentActions 
-                      status={assessment.status}
-                      onStatusUpdate={(newStatus, denialReason) => 
-                        handleStatusUpdate(assessment.id, newStatus, denialReason)
-                      }
-                    />
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-normal"
+                      onClick={() => handlePatientSelect(assessment.user_id)}
+                    >
+                      {assessment.profiles?.first_name} {assessment.profiles?.last_name}
+                    </Button>
                   </TableCell>
+                  <TableCell>{assessment.plan_type}</TableCell>
+                  <TableCell>{assessment.medication}</TableCell>
+                  <TableCell>
+                    <div className="capitalize">{assessment.status}</div>
+                  </TableCell>
+                  <TableCell>
+                    {assessment.created_at
+                      ? new Date(assessment.created_at).toLocaleDateString()
+                      : "N/A"}
+                  </TableCell>
+                  {showActions && (
+                    <TableCell>
+                      <AssessmentActions 
+                        status={assessment.status}
+                        onStatusUpdate={(newStatus, denialReason) => 
+                          handleStatusUpdate(assessment.id, newStatus, denialReason)
+                        }
+                      />
+                    </TableCell>
+                  )}
+                </TableRow>
+                {assessment.status === "denied" && assessment.denial_reason && (
+                  <TableRow key={`${assessment.id}-denial`} className="bg-muted/30">
+                    <TableCell colSpan={6} className="py-2">
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-medium">Denial Reason:</span> {assessment.denial_reason}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </TableRow>
+              </>
             ))}
           </TableBody>
         </Table>
