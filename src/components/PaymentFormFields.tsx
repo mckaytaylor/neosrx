@@ -1,23 +1,15 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePaymentContext } from "./payment/PaymentFormContext";
 
-interface PaymentFormFieldsProps {
-  paymentData: {
-    cardNumber: string;
-    expirationDate: string;
-    cardCode: string;
-  };
-  handleCardNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleExpirationDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleCardCodeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
+export const PaymentFormFields = () => {
+  const {
+    paymentData,
+    handleCardNumberChange,
+    handleExpirationDateChange,
+    handleCardCodeChange,
+  } = usePaymentContext();
 
-export const PaymentFormFields = ({
-  paymentData,
-  handleCardNumberChange,
-  handleExpirationDateChange,
-  handleCardCodeChange,
-}: PaymentFormFieldsProps) => {
   return (
     <>
       <div>
