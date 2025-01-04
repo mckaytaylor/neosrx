@@ -9,15 +9,23 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
   useEffect(() => {
     const saveDraftAssessment = async () => {
       try {
-        if (!draftAssessmentId) return;
+        if (!draftAssessmentId) {
+          console.log('No draft assessment ID available');
+          return;
+        }
 
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          console.log('No authenticated user found');
+          return;
+        }
 
+        console.log('Saving draft assessment:', { formData, draftAssessmentId });
         const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
         const weight = parseFloat(formData.weight);
 
         if (!formData.selectedConditions?.length && !formData.weight && !formData.heightFeet) {
+          console.log('No significant changes to save');
           return;
         }
 
@@ -57,9 +65,19 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
           .update(assessmentData)
           .eq('id', draftAssessmentId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error saving draft assessment:', error);
+          toast({
+            title: "Error",
+            description: "Failed to save your progress. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log('Successfully saved draft assessment');
       } catch (error) {
-        console.error('Error saving draft assessment:', error);
+        console.error('Error in saveDraftAssessment:', error);
         toast({
           title: "Error",
           description: "Failed to save your progress. Please try again.",
@@ -68,6 +86,7 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
       }
     };
 
-    saveDraftAssessment();
+    const debounceTimeout = setTimeout(saveDraftAssessment, 500);
+    return () => clearTimeout(debounceTimeout);
   }, [formData, draftAssessmentId, toast]);
 };

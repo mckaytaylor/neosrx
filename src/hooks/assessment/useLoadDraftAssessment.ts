@@ -11,8 +11,12 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
     const loadDraftAssessment = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          console.log('No authenticated user found');
+          return;
+        }
 
+        console.log('Fetching draft assessment for user:', user.id);
         const { data: assessment, error } = await supabase
           .from('assessments')
           .select('*')
@@ -23,6 +27,11 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
 
         if (error) {
           console.error('Error loading draft assessment:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load your draft assessment. Please try again.",
+            variant: "destructive",
+          });
           return;
         }
 
@@ -60,9 +69,9 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
           });
         } else {
           console.log('No draft assessment found');
-          // Only create a new draft if explicitly requested via state
           const state = window.history.state?.usr;
           if (state?.startNew) {
+            console.log('Creating new draft assessment');
             const { data: newAssessment, error: createError } = await supabase
               .from('assessments')
               .insert({
@@ -77,21 +86,32 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
 
             if (createError) {
               console.error('Error creating draft assessment:', createError);
+              toast({
+                title: "Error",
+                description: "Failed to create a new assessment. Please try again.",
+                variant: "destructive",
+              });
               return;
             }
 
             if (newAssessment) {
+              console.log('Created new draft assessment:', newAssessment);
               setDraftAssessmentId(newAssessment.id);
             }
           }
         }
       } catch (error) {
-        console.error('Error loading draft assessment:', error);
+        console.error('Error in loadDraftAssessment:', error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
     loadDraftAssessment();
-  }, [setFormData]);
+  }, [setFormData, toast]);
 
   return { draftAssessmentId };
 };
