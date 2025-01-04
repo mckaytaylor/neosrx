@@ -42,7 +42,15 @@ const Index = () => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Reset password error:', error);
+        toast({
+          title: "Error",
+          description: "Unable to send reset password email. Please verify your email address and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Password Reset Email Sent",
@@ -124,21 +132,10 @@ const Index = () => {
         if (signInError) {
           console.error('Sign in error:', signInError);
           
-          // Generic error message for invalid credentials
-          if (signInError.message.includes('Invalid login credentials') || 
-              signInError.message.includes('Email not confirmed')) {
-            toast({
-              title: "Login Failed",
-              description: "Incorrect email or password. Please try again or reset your password.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          // Handle other potential errors
+          // For any authentication error, show a generic message
           toast({
             title: "Login Failed",
-            description: "An error occurred during login. Please try again.",
+            description: "Incorrect email or password. Please try again or reset your password.",
             variant: "destructive",
           });
           return;
