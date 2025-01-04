@@ -27,6 +27,7 @@ export const AssessmentsList = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+      console.log("Fetched assessments:", data); // Debug log
       return data;
     },
   });
@@ -100,6 +101,9 @@ export const AssessmentsList = () => {
       </div>
     );
   }
+
+  // Debug log to check assessments data
+  console.log("Current assessments:", assessments?.map(a => ({ id: a.id, status: a.status })));
 
   return (
     <div className="space-y-6">
