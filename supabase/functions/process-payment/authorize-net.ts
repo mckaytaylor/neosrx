@@ -17,21 +17,9 @@ export async function processAuthorizeNetPayment(
   const shortRefId = assessment.id.substring(0, 20);
   const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
 
-  // For development environment, return a successful test response
+  // Log test card usage but still process through sandbox
   if (Deno.env.get('ENVIRONMENT') === 'development' && cardNumber === '4111111111111111') {
-    console.log('Using test card in development - returning mock success response');
-    return {
-      messages: {
-        resultCode: "Ok",
-        message: [{ text: "Successful test transaction" }]
-      },
-      transactionResponse: {
-        responseCode: "1",
-        authCode: "TEST123",
-        transId: "TEST" + Date.now(),
-        messages: [{ description: "Test transaction approved" }]
-      }
-    };
+    console.log('Using test card in development - processing through Authorize.net sandbox');
   }
 
   const paymentRequest = {
