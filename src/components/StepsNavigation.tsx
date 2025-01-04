@@ -74,26 +74,24 @@ export const StepsNavigation = ({
 
       console.log('Saving before exit:', assessmentData);
 
-      let assessmentId = formData.id;
-      
+      // Check for existing assessment ID from formData
+      const assessmentId = formData.id || formData.assessmentId;
+
       if (!assessmentId) {
-        // Only create a new assessment if we don't have an ID
-        const { data: newAssessment, error: createError } = await supabase
+        // Only create if no ID exists
+        const { error: createError } = await supabase
           .from('assessments')
-          .insert(assessmentData)
-          .select()
-          .single();
+          .insert(assessmentData);
 
         if (createError) throw createError;
-        assessmentId = newAssessment.id;
       } else {
         // Update existing assessment
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('assessments')
           .update(assessmentData)
           .eq('id', assessmentId);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
       }
 
       toast({
