@@ -40,25 +40,6 @@ export const StepsNavigation = ({
         return;
       }
 
-      // Check if we have a draft assessment ID
-      if (!formData?.id) {
-        // Create a new assessment if we don't have an ID
-        const { data: newAssessment, error: createError } = await supabase
-          .from('assessments')
-          .insert({
-            user_id: user.id,
-            medication: "semaglutide",
-            plan_type: "4 months",
-            amount: 640,
-            status: 'draft' as AssessmentStatus
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        formData = { ...formData, id: newAssessment.id };
-      }
-
       // Convert radio button values to boolean
       const assessmentData = {
         user_id: user.id,
@@ -93,12 +74,27 @@ export const StepsNavigation = ({
 
       console.log('Saving before exit:', assessmentData);
 
-      const { error } = await supabase
-        .from('assessments')
-        .update(assessmentData)
-        .eq('id', formData.id);
+      let assessmentId = formData.id;
+      
+      if (!assessmentId) {
+        // Only create a new assessment if we don't have an ID
+        const { data: newAssessment, error: createError } = await supabase
+          .from('assessments')
+          .insert(assessmentData)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (createError) throw createError;
+        assessmentId = newAssessment.id;
+      } else {
+        // Update existing assessment
+        const { error } = await supabase
+          .from('assessments')
+          .update(assessmentData)
+          .eq('id', assessmentId);
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Progress saved",
