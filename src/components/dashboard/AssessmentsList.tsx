@@ -35,11 +35,12 @@ export const AssessmentsList = () => {
   });
 
   useEffect(() => {
-    if (location.state?.showConfirmation || location.state?.showCompletedOrder) {
+    // Clear any existing state
+    if (location.pathname === '/dashboard' && !location.state?.startNew) {
       navigate(location.pathname, { replace: true });
       queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
     }
-  }, [location.state, navigate, queryClient]);
+  }, [location.pathname, navigate, queryClient]);
 
   const startNewAssessment = async () => {
     const existingDraft = assessments?.find(assessment => assessment.status === "draft");
@@ -82,17 +83,7 @@ export const AssessmentsList = () => {
         } 
       });
     } else if (assessment.status === "completed") {
-      navigate("/dashboard", {
-        replace: true,
-        state: {
-          showConfirmation: true,
-          subscription: {
-            medication: assessment.medication,
-            plan_type: assessment.plan_type,
-            amount: assessment.amount
-          }
-        }
-      });
+      setSelectedAssessment(assessment);
     } else {
       setSelectedAssessment(assessment);
     }

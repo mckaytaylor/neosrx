@@ -52,8 +52,8 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
             hasAllergies: assessment.has_allergies?.toString() || "",
             allergiesList: assessment.allergies_list || "",
             takingBloodThinners: assessment.taking_blood_thinners?.toString() || "",
-            selectedMedication: assessment.medication || "semaglutide",
-            selectedPlan: assessment.plan_type || "4 months",
+            selectedMedication: assessment.medication || "",
+            selectedPlan: assessment.plan_type || "",
             shippingAddress: assessment.shipping_address || "",
             shippingCity: assessment.shipping_city || "",
             shippingState: assessment.shipping_state || "",
@@ -64,14 +64,11 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           // Only create a new draft if explicitly requested via state
           const state = window.history.state?.usr;
           if (state?.startNew) {
-            // Create a new draft assessment with default values
+            // Create a new draft assessment
             const { data: newAssessment, error: createError } = await supabase
               .from('assessments')
               .insert({
                 user_id: user.id,
-                medication: 'semaglutide',
-                plan_type: '4 months',
-                amount: 640, // Default amount for 4 months of semaglutide
                 status: 'draft'
               })
               .select()
@@ -84,11 +81,6 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
 
             if (newAssessment) {
               setDraftAssessmentId(newAssessment.id);
-              setFormData({
-                ...formData,
-                selectedMedication: "semaglutide",
-                selectedPlan: "4 months"
-              });
             }
           }
         }
@@ -136,14 +128,13 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           has_allergies: formData.hasAllergies === "yes",
           allergies_list: formData.allergiesList || null,
           taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || "semaglutide",
-          plan_type: formData.selectedPlan || "4 months",
+          medication: formData.selectedMedication || null,
+          plan_type: formData.selectedPlan || null,
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
           shipping_zip: formData.shippingZip || null,
-          status: 'draft' as const,
-          amount: 640 // Default amount for 4 months of semaglutide
+          status: 'draft' as const
         };
 
         const { error } = await supabase
