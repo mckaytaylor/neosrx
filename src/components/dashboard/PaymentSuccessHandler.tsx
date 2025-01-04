@@ -12,6 +12,20 @@ export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSu
     try {
       console.log('Updating assessment status for ID:', assessmentId);
       
+      // First verify current status
+      const { data: currentAssessment, error: fetchError } = await supabase
+        .from("assessments")
+        .select("*")
+        .eq("id", assessmentId)
+        .single();
+
+      if (fetchError || !currentAssessment) {
+        console.error('Error fetching assessment:', fetchError);
+        throw new Error('Assessment not found');
+      }
+
+      console.log('Current assessment status:', currentAssessment.status);
+
       const { data, error } = await supabase
         .from("assessments")
         .update({ status: "completed" })
@@ -66,16 +80,19 @@ export const PaymentSuccessHandler = () => {
       try {
         console.log('Updating assessment status for ID:', assessmentId);
         
-        // First, verify the assessment exists and get its current data
-        const { data: assessment, error: fetchError } = await supabase
+        // First verify current status
+        const { data: currentAssessment, error: fetchError } = await supabase
           .from("assessments")
           .select("*")
           .eq("id", assessmentId)
           .single();
 
-        if (fetchError || !assessment) {
+        if (fetchError || !currentAssessment) {
+          console.error('Error fetching assessment:', fetchError);
           throw new Error('Assessment not found');
         }
+
+        console.log('Current assessment status:', currentAssessment.status);
 
         // Update the assessment status to completed
         const { data, error } = await supabase

@@ -25,38 +25,33 @@ export const useConfirmationStatus = (subscription: Subscription) => {
       try {
         console.log("Updating assessment status for ID:", subscription.id);
         
-        // First verify the current status
+        // First verify current status
         const { data: currentAssessment, error: fetchError } = await supabase
           .from("assessments")
-          .select("status")
+          .select("*")
           .eq("id", subscription.id)
-          .maybeSingle();
+          .single();
 
-        if (fetchError) {
+        if (fetchError || !currentAssessment) {
           console.error("Error fetching assessment:", fetchError);
-          throw fetchError;
-        }
-
-        if (!currentAssessment) {
-          console.error("Assessment not found");
           throw new Error("Assessment not found");
         }
 
-        // Only update if not already completed
-        if (currentAssessment.status !== "completed") {
-          const { error } = await supabase
-            .from("assessments")
-            .update({ status: "completed" })
-            .eq("id", subscription.id);
+        console.log("Current assessment status:", currentAssessment.status);
 
-          if (error) {
-            console.error("Error updating assessment status:", error);
-            throw error;
-          }
+        // Force update to completed status
+        const { error } = await supabase
+          .from("assessments")
+          .update({ status: "completed" })
+          .eq("id", subscription.id);
 
-          await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
-          console.log("Successfully updated assessment status to completed");
+        if (error) {
+          console.error("Error updating assessment status:", error);
+          throw error;
         }
+
+        await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
+        console.log("Successfully updated assessment status to completed");
         
         // Send confirmation email
         const { data: { user } } = await supabase.auth.getUser();

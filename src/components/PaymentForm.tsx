@@ -19,8 +19,11 @@ const PaymentFormContent = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await handleSubmit(paymentData);
-    // Invalidate queries to refresh assessment data
-    await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
+    // Force invalidate queries to refresh assessment data
+    await queryClient.invalidateQueries({ 
+      queryKey: ["user-assessments"],
+      refetchType: 'all'
+    });
   };
 
   return (
