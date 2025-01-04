@@ -62,6 +62,8 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
     setIsProcessing(true);
 
     try {
+      console.log('Fetching assessment details for ID:', subscriptionId);
+      
       const { data: assessment, error: assessmentError } = await supabase
         .from('assessments')
         .select('*')
@@ -104,6 +106,8 @@ export const usePaymentSubmission = (subscriptionId: string, onSuccess: () => vo
       if (response.error) {
         throw new Error(response.error.message || "Payment processing failed");
       }
+
+      console.log('Payment processed successfully, updating assessment status');
 
       const { error: updateError } = await supabase
         .from('assessments')

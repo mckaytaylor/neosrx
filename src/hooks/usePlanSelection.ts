@@ -54,6 +54,8 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
+      console.log('Selected plan pricing:', { medication, plan, amount });
+
       const medicalConditions = Array.isArray(formData.selectedConditions) 
         ? formData.selectedConditions 
         : [];
