@@ -136,6 +136,28 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
     setIsProcessing(true);
 
     try {
+      // First, verify the assessment exists and has a valid amount
+      const { data: assessment, error: assessmentError } = await supabase
+        .from('assessments')
+        .select('*')
+        .eq('id', subscriptionId)
+        .single();
+
+      if (assessmentError || !assessment) {
+        throw new Error("Assessment not found");
+      }
+
+      if (!assessment.amount || assessment.amount <= 0) {
+        throw new Error("Invalid assessment amount");
+      }
+
+      console.log('Processing payment for assessment:', {
+        id: assessment.id,
+        amount: assessment.amount,
+        plan: assessment.plan_type,
+        medication: assessment.medication
+      });
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error("No active session");

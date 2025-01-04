@@ -9,6 +9,28 @@ interface PlanSelectionHandlerProps {
 export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerProps) => {
   const { toast } = useToast();
 
+  const calculateAmount = (medication: string, plan: string): number | null => {
+    const amounts: Record<string, Record<string, number>> = {
+      tirzepatide: {
+        "1 month": 499,
+        "3 months": 810,
+        "5 months": 1300,
+      },
+      semaglutide: {
+        "1 month": 399,
+        "4 months": 640,
+        "7 months": 1050,
+      },
+    };
+
+    if (!medication || !amounts[medication] || !amounts[medication][plan]) {
+      console.error('Invalid amount calculation:', { medication, plan });
+      return null;
+    }
+
+    return amounts[medication][plan];
+  };
+
   const handlePlanSelect = async (plan: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -42,6 +64,14 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
       const weight = parseFloat(formData.weight);
 
+      // First check if there's an existing draft
+      const { data: existingDraft } = await supabase
+        .from('assessments')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'draft')
+        .single();
+
       const assessmentData = {
         medication: medication,
         plan_type: plan,
@@ -51,14 +81,6 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         patient_weight: isNaN(weight) ? null : weight,
         status: 'draft' as const
       };
-
-      // First check if there's an existing draft
-      const { data: existingDraft } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'draft')
-        .single();
 
       let data;
       if (existingDraft) {
@@ -101,30 +123,6 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         variant: "destructive",
       });
     }
-  };
-
-  const calculateAmount = (medication: string | undefined, plan: string): number | null => {
-    if (!medication) return null;
-
-    const amounts: Record<string, Record<string, number>> = {
-      tirzepatide: {
-        "1 month": 499,
-        "3 months": 810,
-        "5 months": 1300,
-      },
-      semaglutide: {
-        "1 month": 399,
-        "4 months": 640,
-        "7 months": 1050,
-      },
-    };
-
-    if (!amounts[medication] || !amounts[medication][plan]) {
-      console.error('Invalid amount calculation:', { medication, plan });
-      return null;
-    }
-
-    return amounts[medication][plan];
   };
 
   return { handlePlanSelect };
