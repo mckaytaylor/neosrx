@@ -42,7 +42,7 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
           // Recalculate amount based on medication and plan type
           const calculatedAmount = assessment.medication && assessment.plan_type
             ? calculateAmount(assessment.medication, assessment.plan_type)
-            : null;
+            : 499; // Default to minimum amount if no plan selected
 
           console.log('Calculated amount for draft:', {
             medication: assessment.medication,
@@ -91,8 +91,8 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
             hasAllergies: assessment.has_allergies ? "yes" : "no",
             allergiesList: assessment.allergies_list || "",
             takingBloodThinners: assessment.taking_blood_thinners ? "yes" : "no",
-            selectedMedication: assessment.medication || "",
-            selectedPlan: assessment.plan_type || "",
+            selectedMedication: assessment.medication || "tirzepatide",
+            selectedPlan: assessment.plan_type || "1 month",
             shippingAddress: assessment.shipping_address || "",
             shippingCity: assessment.shipping_city || "",
             shippingState: assessment.shipping_state || "",
@@ -109,9 +109,9 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
               .insert({
                 user_id: user.id,
                 status: 'draft',
-                medication: null,
-                plan_type: null,
-                amount: null
+                medication: 'tirzepatide',
+                plan_type: '1 month',
+                amount: 499 // Default amount for tirzepatide 1 month
               })
               .select()
               .single();

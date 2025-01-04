@@ -9,30 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { MedicalConditionsList } from "./medical-history/MedicalConditionsList";
 import { MedicalQuestionsForm } from "./medical-history/MedicalQuestionsForm";
 import { MedicationsForm } from "./medical-history/MedicationsForm";
-
-interface MedicalHistoryFormData {
-  selectedConditions: string[];
-  otherCondition: string;
-  medullaryThyroidCancer: string;
-  familyMtcHistory: string;
-  men2: string;
-  pregnantOrBreastfeeding: string;
-  weight: string;
-  heightFeet: string;
-  heightInches: string;
-  exerciseActivity: string;
-  takingMedications: string;
-  medicationsList: string;
-  previousGlp1: string;
-  recentGlp1: string;
-  hasAllergies: string;
-  allergiesList: string;
-  takingBloodThinners: string;
-}
+import { AssessmentFormData } from "@/types/assessment";
 
 interface MedicalHistoryFormProps {
-  formData: MedicalHistoryFormData;
-  onChange: (data: Partial<MedicalHistoryFormData>) => void;
+  formData: AssessmentFormData;
+  onChange: (data: Partial<AssessmentFormData>) => void;
 }
 
 export const MedicalHistoryForm = ({ formData, onChange }: MedicalHistoryFormProps) => {
