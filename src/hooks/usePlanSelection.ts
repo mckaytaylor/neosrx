@@ -45,21 +45,44 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         .eq('status', 'draft')
         .single();
 
+      const assessmentData = {
+        medication,
+        plan_type: plan,
+        amount,
+        medical_conditions: formData.selectedConditions || [],
+        patient_height: parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0'),
+        patient_weight: parseFloat(formData.weight) || null,
+        date_of_birth: formData.dateOfBirth || null,
+        gender: formData.gender || null,
+        cell_phone: formData.cellPhone || null,
+        other_medical_conditions: formData.otherCondition || null,
+        medullary_thyroid_cancer: formData.medullaryThyroidCancer === "yes",
+        family_mtc_history: formData.familyMtcHistory === "yes",
+        men2: formData.men2 === "yes",
+        pregnant_or_breastfeeding: formData.pregnantOrBreastfeeding === "yes",
+        exercise_activity: formData.exerciseActivity || null,
+        taking_medications: formData.takingMedications === "yes",
+        medications_list: formData.medicationsList || null,
+        previous_glp1: formData.previousGlp1 === "yes",
+        recent_glp1: formData.recentGlp1 === "yes",
+        has_allergies: formData.hasAllergies === "yes",
+        allergies_list: formData.allergiesList || null,
+        taking_blood_thinners: formData.takingBloodThinners === "yes",
+        shipping_address: formData.shippingAddress || null,
+        shipping_city: formData.shippingCity || null,
+        shipping_state: formData.shippingState || null,
+        shipping_zip: formData.shippingZip || null,
+      };
+
       if (existingDraft) {
         console.log('Updating existing draft:', { 
           id: existingDraft.id,
-          medication,
-          plan,
-          amount 
+          ...assessmentData
         });
 
         const { data, error } = await supabase
           .from('assessments')
-          .update({
-            medication,
-            plan_type: plan,
-            amount
-          })
+          .update(assessmentData)
           .eq('id', existingDraft.id)
           .select()
           .single();
@@ -68,19 +91,13 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         console.log('Successfully updated draft assessment:', data);
         onSuccess(plan, data.id);
       } else {
-        console.log('Creating new assessment:', { 
-          medication,
-          plan,
-          amount 
-        });
+        console.log('Creating new assessment:', assessmentData);
 
         const { data, error } = await supabase
           .from('assessments')
           .insert({
+            ...assessmentData,
             user_id: user.id,
-            medication,
-            plan_type: plan,
-            amount,
             status: 'draft'
           })
           .select()
