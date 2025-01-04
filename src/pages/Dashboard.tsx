@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { AssessmentsList } from "@/components/dashboard/AssessmentsList";
 import { Loader } from "lucide-react";
+import { AssessmentFormData } from "@/types/assessment";
 
 const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(2);
@@ -18,6 +18,36 @@ const Dashboard = () => {
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [formData, setFormData] = useState<AssessmentFormData>({
+    dateOfBirth: "",
+    gender: "",
+    cellPhone: "",
+    selectedConditions: [],
+    otherCondition: "",
+    medullaryThyroidCancer: "",
+    familyMtcHistory: "",
+    men2: "",
+    pregnantOrBreastfeeding: "",
+    weight: "",
+    heightFeet: "",
+    heightInches: "",
+    exerciseActivity: "",
+    takingMedications: "",
+    medicationsList: "",
+    previousGlp1: "",
+    recentGlp1: "",
+    hasAllergies: "",
+    allergiesList: "",
+    takingBloodThinners: "",
+    selectedMedication: "",
+    selectedPlan: "",
+    shippingAddress: "",
+    shippingCity: "",
+    shippingState: "",
+    shippingZip: "",
+    assessment: null
+  });
 
   // Check auth status
   useEffect(() => {
