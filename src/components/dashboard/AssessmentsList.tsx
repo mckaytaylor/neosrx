@@ -76,6 +76,18 @@ export const AssessmentsList = () => {
           assessmentId: assessment.id 
         } 
       });
+    } else if (assessment.status === "completed") {
+      // If the assessment is completed, show the confirmation screen
+      navigate("/dashboard", {
+        state: {
+          showConfirmation: true,
+          subscription: {
+            medication: assessment.medication,
+            plan_type: assessment.plan_type,
+            amount: assessment.amount
+          }
+        }
+      });
     } else {
       setSelectedAssessment(assessment);
     }
