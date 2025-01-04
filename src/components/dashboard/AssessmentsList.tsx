@@ -4,17 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { CompletedAssessmentModal } from "./CompletedAssessmentModal";
 import { useToast } from "@/hooks/use-toast";
 
 export const AssessmentsList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   
-  const { data: assessments, isLoading } = useQuery({
+  const { data: assessments, isLoading, refetch } = useQuery({
     queryKey: ["user-assessments"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -27,10 +28,20 @@ export const AssessmentsList = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      console.log("Fetched assessments:", data); // Debug log
+      console.log("Fetched assessments:", data);
       return data;
     },
   });
+
+  // Clear location state when component mounts
+  useEffect(() => {
+    if (location.state?.showConfirmation || location.state?.showCompletedOrder) {
+      // Clear the state without triggering a new navigation
+      window.history.replaceState({}, document.title);
+      // Refetch assessments to ensure we have the latest data
+      refetch();
+    }
+  }, [location.state, refetch]);
 
   const startNewAssessment = async () => {
     // Check if there's an existing draft
@@ -101,9 +112,6 @@ export const AssessmentsList = () => {
       </div>
     );
   }
-
-  // Debug log to check assessments data
-  console.log("Current assessments:", assessments?.map(a => ({ id: a.id, status: a.status })));
 
   return (
     <div className="space-y-6">
