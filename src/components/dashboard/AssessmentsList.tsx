@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -13,9 +13,10 @@ export const AssessmentsList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   
-  const { data: assessments, isLoading, refetch } = useQuery({
+  const { data: assessments, isLoading } = useQuery({
     queryKey: ["user-assessments"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -33,15 +34,15 @@ export const AssessmentsList = () => {
     },
   });
 
-  // Clear location state when component mounts
+  // Clear location state and refresh data when component mounts or location state changes
   useEffect(() => {
     if (location.state?.showConfirmation || location.state?.showCompletedOrder) {
-      // Clear the state without triggering a new navigation
-      window.history.replaceState({}, document.title);
-      // Refetch assessments to ensure we have the latest data
-      refetch();
+      // Clear the state and replace the current history entry
+      navigate(location.pathname, { replace: true });
+      // Force a refresh of the assessments data
+      queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
     }
-  }, [location.state, refetch]);
+  }, [location.state, navigate, queryClient]);
 
   const startNewAssessment = async () => {
     // Check if there's an existing draft

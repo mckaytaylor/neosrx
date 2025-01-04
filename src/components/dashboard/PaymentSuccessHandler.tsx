@@ -2,15 +2,16 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSuccess: (assessment: any) => void }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const handlePaymentSuccess = async (assessmentId: string) => {
     try {
       console.log('Updating assessment status for ID:', assessmentId);
       
-      // Update the assessment status to completed
       const { data, error } = await supabase
         .from("assessments")
         .update({ status: "completed" })
@@ -29,6 +30,9 @@ export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSu
         title: "Payment successful",
         description: "Your assessment has been submitted for review.",
       });
+
+      // Invalidate queries to force a refresh
+      await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
 
       if (data) {
         onSuccess(data);
@@ -50,6 +54,7 @@ export const PaymentSuccessHandler = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const assessmentId = searchParams.get("assessment_id");
 
   useEffect(() => {
@@ -76,13 +81,17 @@ export const PaymentSuccessHandler = () => {
 
         console.log('Successfully updated assessment:', data);
 
+        // Invalidate queries before navigating
+        await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
+
         toast({
           title: "Payment successful",
           description: "Your assessment has been submitted for review.",
         });
 
-        // Redirect to dashboard with state to show completed order
+        // Navigate with replace to prevent back navigation to payment page
         navigate("/dashboard", { 
+          replace: true,
           state: { 
             showCompletedOrder: true,
             subscription: data 
@@ -99,7 +108,7 @@ export const PaymentSuccessHandler = () => {
     };
 
     updateAssessmentStatus();
-  }, [assessmentId, navigate, toast]);
+  }, [assessmentId, navigate, toast, queryClient]);
 
   return null;
 };
