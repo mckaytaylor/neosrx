@@ -24,10 +24,10 @@ export const StatusTabs = ({ assessments, onStatusUpdate }: StatusTabsProps) => 
     }
   };
 
-  const renderTabHeader = (label: string, count: number, assessments: Assessment[]) => (
+  const renderTabHeader = (label: string, count: number, assessments: Assessment[], showCounter: boolean = false) => (
     <div className="relative flex items-center gap-2">
       <span>{label}</span>
-      {count > 0 && (
+      {showCounter && count > 0 && (
         <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center">
           {count}
         </span>
@@ -53,7 +53,7 @@ export const StatusTabs = ({ assessments, onStatusUpdate }: StatusTabsProps) => 
     <Tabs defaultValue="completed" className="w-full">
       <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="completed">
-          {renderTabHeader("Completed", completedAssessments.length, completedAssessments)}
+          {renderTabHeader("Completed", completedAssessments.length, completedAssessments, true)}
         </TabsTrigger>
         <TabsTrigger value="prescribed">
           {renderTabHeader("Prescribed", prescribedAssessments.length, prescribedAssessments)}
