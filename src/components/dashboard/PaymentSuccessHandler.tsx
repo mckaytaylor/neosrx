@@ -8,6 +8,8 @@ export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSu
   
   const handlePaymentSuccess = async (assessmentId: string) => {
     try {
+      console.log('Updating assessment status for ID:', assessmentId); // Debug log
+      
       // Update the assessment status to completed
       const { data, error } = await supabase
         .from("assessments")
@@ -38,7 +40,12 @@ export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSu
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating assessment:', error); // Debug log
+        throw error;
+      }
+
+      console.log('Successfully updated assessment:', data); // Debug log
 
       toast({
         title: "Payment successful",
@@ -69,15 +76,27 @@ export const PaymentSuccessHandler = () => {
 
   useEffect(() => {
     const updateAssessmentStatus = async () => {
-      if (!assessmentId) return;
+      if (!assessmentId) {
+        console.log('No assessment ID found in URL parameters'); // Debug log
+        return;
+      }
 
       try {
-        const { error } = await supabase
+        console.log('Updating assessment status for ID:', assessmentId); // Debug log
+        
+        const { data, error } = await supabase
           .from("assessments")
           .update({ status: "completed" })
-          .eq("id", assessmentId);
+          .eq("id", assessmentId)
+          .select()
+          .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating assessment:', error); // Debug log
+          throw error;
+        }
+
+        console.log('Successfully updated assessment:', data); // Debug log
 
         toast({
           title: "Payment successful",
