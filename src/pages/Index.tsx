@@ -82,7 +82,10 @@ const Index = () => {
       setIsSubmitting(true);
 
       if (authMode === "register") {
+        // Get UTM parameters from URL
         const utmParams = getUtmParams();
+        console.log('UTM params during registration:', utmParams);
+
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
@@ -90,7 +93,7 @@ const Index = () => {
             data: {
               first_name: data.firstName,
               last_name: data.lastName,
-              ...utmParams
+              ...utmParams // Include UTM parameters in user metadata
             }
           }
         });

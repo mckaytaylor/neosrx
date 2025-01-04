@@ -44,6 +44,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
 
       // If no current UTM parameters, fetch from profile
       if (!Object.values(currentUtmParams).some(value => value !== null)) {
+        console.log('No UTM params in URL, fetching from profile...');
         const { data: profileData } = await supabase
           .from('profiles')
           .select('utm_source, utm_medium, utm_campaign, utm_term, utm_content')
@@ -51,6 +52,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           .single();
 
         if (profileData) {
+          console.log('Found UTM params in profile:', profileData);
           utmParams = {
             utm_source: profileData.utm_source,
             utm_medium: profileData.utm_medium,
