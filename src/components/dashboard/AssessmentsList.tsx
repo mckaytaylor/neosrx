@@ -7,9 +7,11 @@ import { Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { CompletedAssessmentModal } from "./CompletedAssessmentModal";
+import { useToast } from "@/hooks/use-toast";
 
 export const AssessmentsList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   
   const { data: assessments, isLoading } = useQuery({
@@ -29,8 +31,41 @@ export const AssessmentsList = () => {
     },
   });
 
-  const startNewAssessment = () => {
-    navigate("/dashboard", { state: { startNew: true } });
+  const startNewAssessment = async () => {
+    // Check if there's an existing draft
+    const existingDraft = assessments?.find(assessment => assessment.status === "draft");
+    
+    if (existingDraft) {
+      // If there's an existing draft, navigate to it
+      navigate("/dashboard", { 
+        state: { 
+          continueAssessment: true, 
+          assessmentId: existingDraft.id 
+        } 
+      });
+      toast({
+        title: "Existing draft found",
+        description: "Continuing with your existing assessment.",
+      });
+    } else {
+      // Check if there's at least one completed assessment
+      const hasCompletedAssessment = assessments?.some(
+        assessment => ["prescribed", "denied", "completed"].includes(assessment.status)
+      );
+
+      if (!hasCompletedAssessment && assessments && assessments.length > 0) {
+        toast({
+          title: "Cannot start new assessment",
+          description: "Please complete your current assessment first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // If no draft exists and either there are no assessments or there's a completed one,
+      // start a new assessment
+      navigate("/dashboard", { state: { startNew: true } });
+    }
   };
 
   const handleViewAssessment = (assessment: any) => {
