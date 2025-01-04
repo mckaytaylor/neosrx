@@ -109,9 +109,9 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
               .insert({
                 user_id: user.id,
                 status: 'draft',
-                medication: 'tirzepatide',
-                plan_type: '1 month',
-                amount: 499
+                medication: null,
+                plan_type: null,
+                amount: null
               })
               .select()
               .single();

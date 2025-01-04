@@ -30,10 +30,11 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
           ? calculateAmount(formData.selectedMedication, formData.selectedPlan)
           : null;
 
-        if (!formData.selectedConditions?.length && !formData.weight && !formData.heightFeet) {
-          console.log('No significant changes to save');
-          return;
-        }
+        console.log('Calculated amount:', { 
+          medication: formData.selectedMedication, 
+          plan: formData.selectedPlan, 
+          amount 
+        });
 
         const assessmentData = {
           user_id: user.id,
@@ -58,13 +59,15 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
           taking_blood_thinners: formData.takingBloodThinners === "yes",
           medication: formData.selectedMedication || null,
           plan_type: formData.selectedPlan || null,
-          amount: amount || null,
+          amount: amount,
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
           shipping_zip: formData.shippingZip || null,
           status: 'draft' as const
         };
+
+        console.log('Saving assessment data:', assessmentData);
 
         const { error } = await supabase
           .from('assessments')
@@ -92,6 +95,7 @@ export const useSaveDraftAssessment = (formData: AssessmentFormData, draftAssess
       }
     };
 
+    // Save draft after a short delay to avoid too frequent updates
     const debounceTimeout = setTimeout(saveDraftAssessment, 500);
     return () => clearTimeout(debounceTimeout);
   }, [formData, draftAssessmentId, toast]);
