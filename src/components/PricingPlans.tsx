@@ -70,7 +70,6 @@ export const PricingPlans = ({
     // Format the plan type to match the database format (e.g., "1_month", "3_months")
     const duration = plan.split(" ");
     const formattedPlan = `${duration[0]}_${duration[1]}${parseInt(duration[0]) > 1 ? 's' : ''}`;
-    console.log('Selected plan:', formattedPlan); // Debug log
     onPlanSelect(formattedPlan);
   };
 
@@ -95,7 +94,7 @@ export const PricingPlans = ({
             )}
             <CardHeader>
               <CardTitle className="text-lg">
-                {plan.duration.split(" ")[0]} {parseInt(plan.duration) === 1 ? "month" : "months"} of medication
+                {plan.duration} of medication
               </CardTitle>
             </CardHeader>
             <CardContent>

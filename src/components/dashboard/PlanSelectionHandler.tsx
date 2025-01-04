@@ -60,9 +60,6 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
 
       console.log('Processing plan selection:', { plan, medication }); // Debug log
 
-      // Format the plan type to match the database format (e.g., "1 month" to "1_month")
-      const formattedPlan = plan.toLowerCase().replace(/\s+/g, '_');
-
       // Calculate amount based on plan and medication
       const amounts: Record<string, Record<string, number>> = {
         tirzepatide: {
@@ -77,7 +74,9 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         },
       };
 
+      const formattedPlan = plan.toLowerCase();
       const amount = amounts[medication.toLowerCase()]?.[formattedPlan];
+      
       if (amount === undefined) {
         throw new Error('Invalid plan and medication combination');
       }
