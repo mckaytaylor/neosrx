@@ -66,6 +66,12 @@ export const PricingPlans = ({
     ? "This is for the initial 3-month ramp-up. After that, the standard dose is 7.25 mg/week."
     : "This is for the initial 3-month ramp-up. After that, the standard dose is 1.25 mg/week.";
 
+  const handlePlanSelect = (plan: string) => {
+    // Format the plan type before passing it up
+    const formattedPlan = plan.replace(/\s+/g, '_').toLowerCase();
+    onPlanSelect(formattedPlan);
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-3 gap-6">
@@ -74,9 +80,9 @@ export const PricingPlans = ({
             key={plan.duration}
             className={cn(
               "relative cursor-pointer transition-all hover:shadow-lg",
-              selectedPlan === plan.duration.toLowerCase() && "border-primary ring-2 ring-primary"
+              selectedPlan === plan.duration.toLowerCase().replace(/\s+/g, '_') && "border-primary ring-2 ring-primary"
             )}
-            onClick={() => onPlanSelect(plan.duration.toLowerCase())}
+            onClick={() => handlePlanSelect(plan.duration)}
           >
             {index === 1 && (
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
