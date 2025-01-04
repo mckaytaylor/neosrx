@@ -67,8 +67,10 @@ export const PricingPlans = ({
     : "This is for the initial 3-month ramp-up. After that, the standard dose is 1.25 mg/week.";
 
   const handlePlanSelect = (plan: string) => {
-    // Format the plan type before passing it up
-    const formattedPlan = plan.replace(/\s+/g, '_').toLowerCase();
+    // Format the plan type to match the database format (e.g., "1_month", "3_months")
+    const duration = plan.split(" ");
+    const formattedPlan = `${duration[0]}_${duration[1]}${parseInt(duration[0]) > 1 ? 's' : ''}`;
+    console.log('Selected plan:', formattedPlan); // Debug log
     onPlanSelect(formattedPlan);
   };
 

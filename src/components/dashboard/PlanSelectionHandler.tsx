@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { formatPlanType, validatePlan, calculateAmount } from "@/utils/planUtils";
 
 interface PlanSelectionHandlerProps {
   formData: any;
@@ -13,7 +12,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
   const prepareAssessmentData = (
     userId: string,
     medication: string,
-    formattedPlan: string,
+    plan: string,
     amount: number,
     formData: any
   ) => {
@@ -26,7 +25,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
     const data = {
       user_id: userId,
       medication: medication.toLowerCase(),
-      plan_type: formattedPlan,
+      plan_type: plan,
       amount: amount,
       medical_conditions: medicalConditions,
       patient_height: isNaN(height) ? null : height,
@@ -50,19 +49,40 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
+      if (!plan || typeof plan !== 'string') {
+        throw new Error('Invalid plan selection');
+      }
+
       const medication = formData.selectedMedication;
-      validatePlan(plan, medication);
+      if (!medication || typeof medication !== 'string') {
+        throw new Error('Please select a medication first');
+      }
 
-      const formattedPlan = formatPlanType(plan);
-      console.log('Selected plan:', { plan, formattedPlan });
+      console.log('Processing plan selection:', { plan, medication }); // Debug log
 
-      const amount = calculateAmount(medication, formattedPlan);
-      console.log('Calculated amount:', amount);
+      // Calculate amount based on plan and medication
+      const amounts: Record<string, Record<string, number>> = {
+        tirzepatide: {
+          "1_month": 499,
+          "3_months": 810,
+          "5_months": 1300,
+        },
+        semaglutide: {
+          "1_month": 399,
+          "4_months": 640,
+          "7_months": 1050,
+        },
+      };
+
+      const amount = amounts[medication.toLowerCase()]?.[plan];
+      if (amount === undefined) {
+        throw new Error('Invalid plan and medication combination');
+      }
 
       const assessmentData = prepareAssessmentData(
         user.id,
         medication,
-        formattedPlan,
+        plan,
         amount,
         formData
       );
@@ -104,7 +124,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       }
 
       console.log('Assessment saved successfully:', data);
-      onSuccess(formattedPlan, data.id);
+      onSuccess(plan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({
