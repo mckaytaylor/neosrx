@@ -12,14 +12,13 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Get the most recent draft assessment
+        // Get the most recent draft assessment using maybeSingle() instead of single()
         const { data: assessment, error } = await supabase
           .from('assessments')
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'draft')
           .order('created_at', { ascending: false })
-          .limit(1)
           .maybeSingle();
 
         if (error) {
@@ -64,12 +63,15 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           // Only create a new draft if explicitly requested via state
           const state = window.history.state?.usr;
           if (state?.startNew) {
-            // Create a new draft assessment
+            // Create a new draft assessment with minimum required fields
             const { data: newAssessment, error: createError } = await supabase
               .from('assessments')
               .insert({
                 user_id: user.id,
-                status: 'draft'
+                status: 'draft',
+                medication: 'tirzepatide', // Default medication
+                plan_type: '1 month',     // Default plan
+                amount: 499              // Default amount
               })
               .select()
               .single();
@@ -128,8 +130,9 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           has_allergies: formData.hasAllergies === "yes",
           allergies_list: formData.allergiesList || null,
           taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || null,
-          plan_type: formData.selectedPlan || null,
+          medication: formData.selectedMedication || 'tirzepatide',
+          plan_type: formData.selectedPlan || '1 month',
+          amount: 499, // Default amount for 1 month
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
