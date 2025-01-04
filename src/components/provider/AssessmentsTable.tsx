@@ -1,17 +1,10 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+import { Table, TableBody } from "@/components/ui/table"
 import { Assessment } from "./types"
 import { useState } from "react"
 import { PatientDetailsModal } from "./PatientDetailsModal"
 import { useToast } from "@/hooks/use-toast"
-import { AssessmentActions } from "./AssessmentActions"
+import { AssessmentTableHeader } from "./AssessmentTableHeader"
+import { AssessmentTableRow } from "./AssessmentTableRow"
 
 interface AssessmentsTableProps {
   assessments: Assessment[]
@@ -63,55 +56,20 @@ export const AssessmentsTable = ({
     <>
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Patient Name</TableHead>
-              <TableHead>Plan Type</TableHead>
-              <TableHead>Medication</TableHead>
-              <TableHead>Status</TableHead>
-              {showDenialReason && <TableHead>Denial Reason</TableHead>}
-              <TableHead>Submission Date</TableHead>
-              {showActions && <TableHead>Actions</TableHead>}
-            </TableRow>
-          </TableHeader>
+          <AssessmentTableHeader 
+            showDenialReason={showDenialReason} 
+            showActions={showActions} 
+          />
           <TableBody>
             {assessments?.map((assessment) => (
-              <TableRow key={assessment.id}>
-                <TableCell>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-normal"
-                    onClick={() => handlePatientSelect(assessment.user_id)}
-                  >
-                    {assessment.profiles?.first_name} {assessment.profiles?.last_name}
-                  </Button>
-                </TableCell>
-                <TableCell>{assessment.plan_type}</TableCell>
-                <TableCell>{assessment.medication}</TableCell>
-                <TableCell>
-                  <div className="capitalize">{assessment.status}</div>
-                </TableCell>
-                {showDenialReason && (
-                  <TableCell>
-                    {assessment.denial_reason || "-"}
-                  </TableCell>
-                )}
-                <TableCell>
-                  {assessment.created_at
-                    ? new Date(assessment.created_at).toLocaleDateString()
-                    : "N/A"}
-                </TableCell>
-                {showActions && (
-                  <TableCell>
-                    <AssessmentActions 
-                      status={assessment.status}
-                      onStatusUpdate={(newStatus, denialReason) => 
-                        handleStatusUpdate(assessment.id, newStatus, denialReason)
-                      }
-                    />
-                  </TableCell>
-                )}
-              </TableRow>
+              <AssessmentTableRow
+                key={assessment.id}
+                assessment={assessment}
+                showDenialReason={showDenialReason}
+                showActions={showActions}
+                onPatientSelect={handlePatientSelect}
+                onStatusUpdate={handleStatusUpdate}
+              />
             ))}
           </TableBody>
         </Table>
