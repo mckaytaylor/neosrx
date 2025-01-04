@@ -63,7 +63,8 @@ export const ConfirmationScreen = ({ subscription }: ConfirmationScreenProps) =>
   }, [toast, subscription]);
 
   const handleReturnToDashboard = () => {
-    navigate("/dashboard", { state: { showCompletedOrder: true } });
+    // Force a hard refresh when returning to dashboard
+    window.location.href = "/dashboard";
   };
 
   if (!subscription) {
