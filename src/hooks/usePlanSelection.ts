@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { calculateAmount } from "@/utils/pricingUtils";
 
 interface PlanSelectionHandlerProps {
   formData: any;
@@ -21,34 +22,13 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const amounts: Record<string, Record<string, number>> = {
-        tirzepatide: {
-          "1 month": 499,
-          "3 months": 810,
-          "5 months": 1300,
-        },
-        semaglutide: {
-          "1 month": 399,
-          "4 months": 640,
-          "7 months": 1050,
-        },
-      };
-
       const medication = formData.selectedMedication?.toLowerCase();
-      if (!medication || !amounts[medication]) {
+      const amount = calculateAmount(medication, plan);
+      
+      if (!amount) {
         toast({
           title: "Error",
-          description: "Invalid medication selected",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const amount = amounts[medication][plan];
-      if (amount === undefined) {
-        toast({
-          title: "Error",
-          description: "Invalid plan selected",
+          description: "Invalid plan or medication selected",
           variant: "destructive",
         });
         return;
@@ -56,34 +36,44 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
 
       console.log('Selected plan pricing:', { medication, plan, amount });
 
-      const medicalConditions = Array.isArray(formData.selectedConditions) 
-        ? formData.selectedConditions 
-        : [];
-
-      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
-      const weight = parseInt(formData.weight);
-
-      const { data, error } = await supabase
+      // First check if there's an existing draft
+      const { data: existingDraft } = await supabase
         .from('assessments')
-        .insert({
-          user_id: user.id,
-          medication: medication,
-          plan_type: plan,
-          amount: amount,
-          medical_conditions: medicalConditions,
-          patient_height: height || null,
-          patient_weight: weight || null,
-          status: 'draft'
-        })
-        .select()
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'draft')
         .single();
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
-      }
+      if (existingDraft) {
+        const { data, error } = await supabase
+          .from('assessments')
+          .update({
+            medication,
+            plan_type: plan,
+            amount
+          })
+          .eq('id', existingDraft.id)
+          .select()
+          .single();
 
-      onSuccess(plan, data.id);
+        if (error) throw error;
+        onSuccess(plan, data.id);
+      } else {
+        const { data, error } = await supabase
+          .from('assessments')
+          .insert({
+            user_id: user.id,
+            medication,
+            plan_type: plan,
+            amount,
+            status: 'draft'
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        onSuccess(plan, data.id);
+      }
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({

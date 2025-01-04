@@ -18,12 +18,23 @@ export const MEDICATION_PRICES: MedicationPricing = {
 };
 
 export const calculateAmount = (medication: string, plan: string): number | null => {
-  if (!medication || !MEDICATION_PRICES[medication] || !MEDICATION_PRICES[medication][plan]) {
-    console.error('Invalid amount calculation:', { medication, plan });
+  if (!medication || !plan) {
+    console.error('Missing medication or plan:', { medication, plan });
     return null;
   }
 
-  const amount = MEDICATION_PRICES[medication][plan];
+  const medicationPrices = MEDICATION_PRICES[medication.toLowerCase()];
+  if (!medicationPrices) {
+    console.error('Invalid medication:', medication);
+    return null;
+  }
+
+  const amount = medicationPrices[plan];
+  if (amount === undefined) {
+    console.error('Invalid plan:', { medication, plan });
+    return null;
+  }
+
   console.log('Calculated amount:', { medication, plan, amount });
   return amount;
 };

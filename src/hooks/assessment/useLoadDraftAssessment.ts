@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentFormData } from "@/types/assessment";
+import { calculateAmount } from "@/utils/pricingUtils";
 
 export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) => void) => {
   const [draftAssessmentId, setDraftAssessmentId] = useState<string | null>(null);
@@ -37,6 +38,25 @@ export const useLoadDraftAssessment = (setFormData: (data: AssessmentFormData) =
 
         if (assessment) {
           console.log('Found draft assessment:', assessment);
+          
+          // Recalculate amount based on medication and plan type
+          const calculatedAmount = calculateAmount(assessment.medication, assessment.plan_type);
+          if (calculatedAmount && calculatedAmount !== assessment.amount) {
+            console.log('Updating assessment amount:', { 
+              old: assessment.amount, 
+              new: calculatedAmount 
+            });
+            
+            const { error: updateError } = await supabase
+              .from('assessments')
+              .update({ amount: calculatedAmount })
+              .eq('id', assessment.id);
+
+            if (updateError) {
+              console.error('Error updating assessment amount:', updateError);
+            }
+          }
+
           setDraftAssessmentId(assessment.id);
           setFormData({
             dateOfBirth: assessment.date_of_birth || "",
