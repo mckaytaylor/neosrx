@@ -50,8 +50,8 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
             hasAllergies: assessment.has_allergies?.toString() || "",
             allergiesList: assessment.allergies_list || "",
             takingBloodThinners: assessment.taking_blood_thinners?.toString() || "",
-            selectedMedication: assessment.medication || "",
-            selectedPlan: assessment.plan_type || "",
+            selectedMedication: assessment.medication || "tirzepatide", // Default medication
+            selectedPlan: assessment.plan_type || "1_month", // Default plan
             shippingAddress: assessment.shipping_address || "",
             shippingCity: assessment.shipping_city || "",
             shippingState: assessment.shipping_state || "",
@@ -77,6 +77,7 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
         const weight = parseFloat(formData.weight);
 
+        // Only proceed if we have some data to save
         if (!formData.selectedConditions?.length && !formData.weight && !formData.heightFeet) {
           return;
         }
@@ -102,14 +103,14 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           has_allergies: formData.hasAllergies === "yes",
           allergies_list: formData.allergiesList || null,
           taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || null,
-          plan_type: formData.selectedPlan || null,
+          medication: formData.selectedMedication || "tirzepatide", // Default medication
+          plan_type: formData.selectedPlan || "1_month", // Default plan
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
           shipping_zip: formData.shippingZip || null,
           status: 'draft' as const,
-          amount: 0
+          amount: 499 // Default amount for 1_month plan
         };
 
         if (draftAssessmentId) {
