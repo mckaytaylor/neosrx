@@ -21,6 +21,19 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
+      // Calculate amount before database operations
+      const medication = formData.selectedMedication?.toLowerCase();
+      const amount = calculateAmount(medication, plan);
+      
+      if (!amount) {
+        toast({
+          title: "Error",
+          description: "Invalid plan or medication selected",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // First check if there's an existing draft
       const { data: existingDraft } = await supabase
         .from('assessments')
@@ -30,13 +43,13 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         .single();
 
       if (existingDraft) {
-        // Update existing draft instead of creating a new one
+        // Update existing draft with the calculated amount
         const { data, error } = await supabase
           .from('assessments')
           .update({
-            medication: formData.selectedMedication?.toLowerCase(),
+            medication: medication,
             plan_type: plan,
-            amount: calculateAmount(formData.selectedMedication?.toLowerCase(), plan),
+            amount: amount,
             medical_conditions: Array.isArray(formData.selectedConditions) ? formData.selectedConditions : [],
             patient_height: calculateHeight(formData.heightFeet, formData.heightInches),
             patient_weight: parseFloat(formData.weight) || null,
@@ -66,14 +79,14 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      // If no existing draft, create a new one
+      // If no existing draft, create a new one with the calculated amount
       const { data, error } = await supabase
         .from('assessments')
         .insert({
           user_id: user.id,
-          medication: formData.selectedMedication?.toLowerCase(),
+          medication: medication,
           plan_type: plan,
-          amount: calculateAmount(formData.selectedMedication?.toLowerCase(), plan),
+          amount: amount,
           medical_conditions: Array.isArray(formData.selectedConditions) ? formData.selectedConditions : [],
           patient_height: calculateHeight(formData.heightFeet, formData.heightInches),
           patient_weight: parseFloat(formData.weight) || null,
@@ -110,7 +123,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
     }
   };
 
-  const calculateAmount = (medication: string, plan: string): number => {
+  const calculateAmount = (medication: string, plan: string): number | null => {
     const amounts: Record<string, Record<string, number>> = {
       tirzepatide: {
         "1 month": 499,
@@ -125,7 +138,8 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
     };
 
     if (!medication || !amounts[medication] || !amounts[medication][plan]) {
-      throw new Error("Invalid medication or plan selected");
+      console.error('Invalid amount calculation:', { medication, plan });
+      return null;
     }
 
     return amounts[medication][plan];
