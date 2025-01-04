@@ -15,19 +15,21 @@ serve(async (req) => {
   try {
     // Parse request body
     const { paymentData, subscriptionId } = await req.json()
+    
+    console.log('Processing payment request:', { subscriptionId })
+    
     if (!paymentData || !subscriptionId) {
-      console.error('Missing required payment data or subscription ID')
-      throw new Error('Missing required payment data')
+      console.error('Missing required data:', { paymentData: !!paymentData, subscriptionId: !!subscriptionId })
+      throw new Error('Missing required payment data or subscription ID')
     }
-
-    console.log('Processing payment for assessment:', subscriptionId)
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
     if (!supabaseUrl || !supabaseKey) {
       console.error('Missing Supabase configuration')
-      throw new Error('Missing Supabase configuration')
+      throw new Error('Server configuration error')
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
@@ -40,29 +42,27 @@ serve(async (req) => {
       .single()
 
     if (assessmentError || !assessment) {
-      console.error('Assessment not found:', assessmentError)
+      console.error('Assessment fetch error:', assessmentError)
       throw new Error('Assessment not found')
     }
+
+    console.log('Found assessment:', { id: assessment.id, amount: assessment.amount })
 
     // Get Authorize.net credentials
     const authLoginId = Deno.env.get('AUTHORIZENET_API_LOGIN_ID')
     const transactionKey = Deno.env.get('AUTHORIZENET_TRANSACTION_KEY')
+    
     if (!authLoginId || !transactionKey) {
       console.error('Missing Authorize.net credentials')
-      throw new Error('Missing Authorize.net credentials')
+      throw new Error('Payment processor configuration error')
     }
 
-    console.log('Using Authorize.net sandbox endpoint')
-    const authNetEndpoint = 'https://apitest.authorize.net/xml/v1/request.api'
-
-    // Format expiration date (remove any non-digit characters and ensure MMYYYY format)
+    // Format card data
     const expDate = paymentData.expirationDate.replace(/\D/g, '')
-    
-    // Generate a shorter reference ID (first 20 chars of UUID should be unique enough)
     const shortRefId = subscriptionId.substring(0, 20)
-
-    // Format card number (remove spaces)
     const cardNumber = paymentData.cardNumber.replace(/\s/g, '')
+
+    console.log('Preparing payment request for amount:', assessment.amount)
 
     const paymentRequest = {
       createTransactionRequest: {
@@ -85,11 +85,6 @@ serve(async (req) => {
             invoiceNumber: shortRefId,
             description: `${assessment.medication} - ${assessment.plan_type}`
           },
-          tax: {
-            amount: "0.00",
-            name: "No Tax",
-            description: "No Tax Applied"
-          },
           billTo: {
             firstName: "Test",
             lastName: "Customer",
@@ -103,8 +98,9 @@ serve(async (req) => {
       }
     }
 
-    console.log('Sending payment request to Authorize.net sandbox')
-    const response = await fetch(authNetEndpoint, {
+    console.log('Sending payment request to Authorize.net')
+    
+    const response = await fetch('https://apitest.authorize.net/xml/v1/request.api', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -113,11 +109,16 @@ serve(async (req) => {
     })
 
     const paymentResponse = await response.json()
-    console.log('Payment response:', JSON.stringify(paymentResponse))
+    console.log('Payment response received:', {
+      resultCode: paymentResponse.messages?.resultCode,
+      responseCode: paymentResponse.transactionResponse?.responseCode
+    })
 
-    // Check for specific error conditions in the response
+    // Check for specific error conditions
     if (paymentResponse.messages?.resultCode !== "Ok") {
-      const errorMessage = paymentResponse.messages?.message?.[0]?.text || 'Payment processing failed'
+      const errorMessage = paymentResponse.messages?.message?.[0]?.text || 
+                          paymentResponse.transactionResponse?.errors?.[0]?.errorText ||
+                          'Payment processing failed'
       console.error('Payment error details:', errorMessage)
       throw new Error(errorMessage)
     }
@@ -127,12 +128,13 @@ serve(async (req) => {
         paymentResponse.transactionResponse.responseCode !== "1") {
       const errorCode = paymentResponse.transactionResponse?.responseCode
       const errorMessage = paymentResponse.transactionResponse?.messages?.[0]?.description || 
+                          paymentResponse.transactionResponse?.errors?.[0]?.errorText ||
                           'Transaction was not approved'
       console.error(`Payment failed with code ${errorCode}: ${errorMessage}`)
       throw new Error(errorMessage)
     }
 
-    // Update assessment status to 'completed'
+    // Update assessment status
     const { error: updateError } = await supabase
       .from('assessments')
       .update({ status: 'completed' })
@@ -143,7 +145,7 @@ serve(async (req) => {
       throw new Error('Failed to update assessment status')
     }
 
-    console.log('Payment processed successfully for assessment:', subscriptionId)
+    console.log('Payment processed successfully')
 
     return new Response(
       JSON.stringify({ 
