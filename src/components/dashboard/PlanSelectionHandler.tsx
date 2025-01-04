@@ -1,62 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatPlanType, validatePlan, calculateAmount } from "@/utils/planUtils";
 
 interface PlanSelectionHandlerProps {
   formData: any;
   onSuccess: (plan: string, assessmentId: string) => void;
 }
 
-interface PricingConfig {
-  [key: string]: {
-    [key: string]: number;
-  };
-}
-
-const PRICING_CONFIG: PricingConfig = {
-  tirzepatide: {
-    "1_month": 499,
-    "3_months": 810,
-    "5_months": 1300,
-  },
-  semaglutide: {
-    "1_month": 399,
-    "4_months": 640,
-    "7_months": 1050,
-  },
-};
-
 export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerProps) => {
   const { toast } = useToast();
-
-  const formatPlanType = (plan: string): string => {
-    if (!plan) {
-      throw new Error('Plan type is required');
-    }
-    return plan.toLowerCase().replace(/\s+/g, '_');
-  };
-
-  const calculateAmount = (medication: string, formattedPlan: string): number => {
-    if (!medication || !PRICING_CONFIG[medication] || !PRICING_CONFIG[medication][formattedPlan]) {
-      console.error('Invalid amount calculation:', { medication, formattedPlan });
-      throw new Error('Invalid plan or medication selected');
-    }
-
-    const amount = PRICING_CONFIG[medication][formattedPlan];
-    console.log('Calculated amount:', { medication, plan: formattedPlan, amount });
-    return amount;
-  };
-
-  const validatePlanSelection = (plan: string, medication: string) => {
-    if (!plan || typeof plan !== 'string' || plan.trim() === '') {
-      throw new Error('Invalid plan selection');
-    }
-
-    if (!medication || typeof medication !== 'string' || medication.trim() === '') {
-      throw new Error('Please select a medication first');
-    }
-
-    console.log('Plan selection validated:', { plan, medication });
-  };
 
   const prepareAssessmentData = (
     userId: string,
@@ -73,9 +25,9 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
 
     const data = {
       user_id: userId,
-      medication,
+      medication: medication.toLowerCase(),
       plan_type: formattedPlan,
-      amount,
+      amount: amount,
       medical_conditions: medicalConditions,
       patient_height: isNaN(height) ? null : height,
       patient_weight: isNaN(weight) ? null : weight,
@@ -98,13 +50,14 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const medication = formData.selectedMedication?.toLowerCase();
-      validatePlanSelection(plan, medication);
+      const medication = formData.selectedMedication;
+      validatePlan(plan, medication);
 
       const formattedPlan = formatPlanType(plan);
-      console.log('Formatted plan:', formattedPlan);
+      console.log('Selected plan:', { plan, formattedPlan });
 
       const amount = calculateAmount(medication, formattedPlan);
+      console.log('Calculated amount:', amount);
 
       const assessmentData = prepareAssessmentData(
         user.id,
@@ -133,10 +86,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           .select()
           .single();
 
-        if (updateError) {
-          console.error('Update error:', updateError);
-          throw updateError;
-        }
+        if (updateError) throw updateError;
         data = updatedData;
       } else {
         const { data: newData, error: insertError } = await supabase
@@ -145,10 +95,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
           .select()
           .single();
 
-        if (insertError) {
-          console.error('Insert error:', insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
         data = newData;
       }
 
