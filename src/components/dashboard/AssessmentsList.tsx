@@ -1,13 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { CompletedAssessmentModal } from "./CompletedAssessmentModal";
 import { useToast } from "@/hooks/use-toast";
+import { AssessmentCard } from "./AssessmentCard";
+import { EmptyAssessmentState } from "./EmptyAssessmentState";
 
 export const AssessmentsList = () => {
   const navigate = useNavigate();
@@ -34,22 +34,17 @@ export const AssessmentsList = () => {
     },
   });
 
-  // Clear location state and refresh data when component mounts or location state changes
   useEffect(() => {
     if (location.state?.showConfirmation || location.state?.showCompletedOrder) {
-      // Clear the state and replace the current history entry
       navigate(location.pathname, { replace: true });
-      // Force a refresh of the assessments data
       queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
     }
   }, [location.state, navigate, queryClient]);
 
   const startNewAssessment = async () => {
-    // Check if there's an existing draft
     const existingDraft = assessments?.find(assessment => assessment.status === "draft");
     
     if (existingDraft) {
-      // If there's an existing draft, navigate to it
       navigate("/dashboard", { 
         state: { 
           continueAssessment: true, 
@@ -61,7 +56,6 @@ export const AssessmentsList = () => {
         description: "Continuing with your existing assessment.",
       });
     } else {
-      // Check if there's at least one completed assessment
       const hasCompletedAssessment = assessments?.some(
         assessment => ["prescribed", "denied", "completed"].includes(assessment.status)
       );
@@ -75,8 +69,6 @@ export const AssessmentsList = () => {
         return;
       }
 
-      // If no draft exists and either there are no assessments or there's a completed one,
-      // start a new assessment
       navigate("/dashboard", { state: { startNew: true } });
     }
   };
@@ -90,8 +82,8 @@ export const AssessmentsList = () => {
         } 
       });
     } else if (assessment.status === "completed") {
-      // If the assessment is completed, show the confirmation screen
       navigate("/dashboard", {
+        replace: true,
         state: {
           showConfirmation: true,
           subscription: {
@@ -124,60 +116,15 @@ export const AssessmentsList = () => {
       {assessments && assessments.length > 0 ? (
         <div className="grid gap-4">
           {assessments.map((assessment) => (
-            <Card 
+            <AssessmentCard
               key={assessment.id}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => handleViewAssessment(assessment)}
-            >
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Assessment from {format(new Date(assessment.created_at), "PPP")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status:</span>
-                    <span className="font-medium capitalize">{assessment.status}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Medication:</span>
-                    <span className="font-medium capitalize">{assessment.medication}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Plan:</span>
-                    <span className="font-medium">{assessment.plan_type}</span>
-                  </div>
-                  {assessment.status === "draft" && (
-                    <Button 
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate("/dashboard", { 
-                          state: { 
-                            continueAssessment: true, 
-                            assessmentId: assessment.id 
-                          } 
-                        });
-                      }}
-                    >
-                      Continue Assessment
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+              assessment={assessment}
+              onViewAssessment={handleViewAssessment}
+            />
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">No assessments found. Start your first assessment now!</p>
-            <Button onClick={startNewAssessment} className="mt-4">
-              Start Assessment
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyAssessmentState onStartAssessment={startNewAssessment} />
       )}
 
       <CompletedAssessmentModal

@@ -31,7 +31,6 @@ export const usePaymentSuccess = ({ formData, onSuccess }: { formData: any, onSu
         description: "Your assessment has been submitted for review.",
       });
 
-      // Invalidate queries to force a refresh
       await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
 
       if (data) {
@@ -81,7 +80,6 @@ export const PaymentSuccessHandler = () => {
 
         console.log('Successfully updated assessment:', data);
 
-        // Invalidate queries before navigating
         await queryClient.invalidateQueries({ queryKey: ["user-assessments"] });
 
         toast({
@@ -89,7 +87,6 @@ export const PaymentSuccessHandler = () => {
           description: "Your assessment has been submitted for review.",
         });
 
-        // Navigate with replace to prevent back navigation to payment page
         navigate("/dashboard", { 
           replace: true,
           state: { 
