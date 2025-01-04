@@ -18,7 +18,6 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           .eq('user_id', user.id)
           .eq('status', 'draft')
           .order('created_at', { ascending: false })
-          .limit(1)
           .maybeSingle();
 
         if (error) {
@@ -103,8 +102,8 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
           has_allergies: formData.hasAllergies === "yes",
           allergies_list: formData.allergiesList || null,
           taking_blood_thinners: formData.takingBloodThinners === "yes",
-          medication: formData.selectedMedication || "tirzepatide", // Default medication
-          plan_type: formData.selectedPlan || "1 month", // Default plan type
+          medication: formData.selectedMedication || null,
+          plan_type: formData.selectedPlan || null,
           shipping_address: formData.shippingAddress || null,
           shipping_city: formData.shippingCity || null,
           shipping_state: formData.shippingState || null,
