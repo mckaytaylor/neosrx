@@ -46,7 +46,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       }
 
       const medication = formData.selectedMedication?.toLowerCase();
-      const selectedPlan = plan || '1 month';
+      const selectedPlan = plan;
       const amount = calculateAmount(medication, selectedPlan);
       
       if (!amount) {
@@ -63,60 +63,28 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         : [];
 
       const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
-      const weight = parseFloat(formData.weight);
+      const weight = parseInt(formData.weight);
 
-      // First check if there's an existing draft
-      const { data: existingDraft } = await supabase
+      const { data, error } = await supabase
         .from('assessments')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'draft')
+        .insert({
+          user_id: user.id,
+          medication: medication,
+          plan_type: selectedPlan,
+          amount: amount,
+          medical_conditions: medicalConditions,
+          patient_height: height || null,
+          patient_weight: weight || null,
+          status: 'draft'
+        })
+        .select()
         .single();
 
-      const assessmentData = {
-        medication: medication,
-        plan_type: selectedPlan,
-        amount: amount,
-        medical_conditions: medicalConditions,
-        patient_height: isNaN(height) ? null : height,
-        patient_weight: isNaN(weight) ? null : weight,
-        status: 'draft' as const
-      };
-
-      console.log('Saving assessment with data:', assessmentData);
-
-      let data;
-      if (existingDraft) {
-        // Update existing draft
-        const { data: updatedData, error: updateError } = await supabase
-          .from('assessments')
-          .update(assessmentData)
-          .eq('id', existingDraft.id)
-          .select()
-          .single();
-
-        if (updateError) throw updateError;
-        data = updatedData;
-      } else {
-        // Create new draft with user_id
-        const { data: newData, error: insertError } = await supabase
-          .from('assessments')
-          .insert({
-            ...assessmentData,
-            user_id: user.id
-          })
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        data = newData;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
       }
 
-      if (!data) {
-        throw new Error("Failed to save assessment");
-      }
-
-      console.log('Assessment saved successfully:', data);
       onSuccess(selectedPlan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
