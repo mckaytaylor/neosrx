@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
   
   const [formData, setFormData] = useState<AssessmentFormData>({
     dateOfBirth: "",
@@ -51,13 +52,23 @@ const Dashboard = () => {
 
   // Check auth status
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
+
     const checkAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Auth check error:", error);
-          navigate("/");
+          if (retryCount < maxRetries) {
+            retryCount++;
+            setTimeout(checkAuth, retryDelay);
+            return;
+          }
+          setAuthError(true);
+          setIsLoading(false);
           return;
         }
 
@@ -67,9 +78,15 @@ const Dashboard = () => {
         }
 
         setIsLoading(false);
+        setAuthError(false);
       } catch (error) {
         console.error("Auth check error:", error);
-        // Don't redirect on network errors, just log them
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(checkAuth, retryDelay);
+          return;
+        }
+        setAuthError(true);
         setIsLoading(false);
       }
     };
@@ -132,6 +149,19 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="container mx-auto p-6">
+        <DashboardHeader onLogout={handleLogout} />
+        <div className="flex flex-col items-center justify-center space-y-4 mt-8">
+          <p className="text-gray-600">
+            Experiencing connection issues. Your data is safe and will be available when the connection is restored.
+          </p>
+        </div>
       </div>
     );
   }
