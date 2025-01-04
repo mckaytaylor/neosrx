@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAssessmentManagement } from "@/hooks/useAssessmentManagement";
 
 interface PlanSelectionHandlerProps {
   formData: any;
@@ -8,30 +9,7 @@ interface PlanSelectionHandlerProps {
 
 export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerProps) => {
   const { toast } = useToast();
-
-  const calculateAmount = (medication: string, plan: string): number | null => {
-    const amounts: Record<string, Record<string, number>> = {
-      tirzepatide: {
-        "1 month": 499,
-        "3 months": 810,
-        "5 months": 1300,
-      },
-      semaglutide: {
-        "1 month": 399,
-        "4 months": 640,
-        "7 months": 1050,
-      },
-    };
-
-    if (!medication || !amounts[medication] || !amounts[medication][plan]) {
-      console.error('Invalid amount calculation:', { medication, plan });
-      return null;
-    }
-
-    const calculatedAmount = amounts[medication][plan];
-    console.log('Calculated amount:', { medication, plan, amount: calculatedAmount });
-    return calculatedAmount;
-  };
+  const { saveAssessment } = useAssessmentManagement();
 
   const handlePlanSelect = async (plan: string) => {
     try {
@@ -45,47 +23,12 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      const medication = formData.selectedMedication?.toLowerCase();
-      const selectedPlan = plan;
-      const amount = calculateAmount(medication, selectedPlan);
+      const assessment = await saveAssessment(user.id, formData, plan);
       
-      if (!amount) {
-        toast({
-          title: "Error",
-          description: "Invalid plan or medication selected",
-          variant: "destructive",
-        });
-        return;
+      if (assessment) {
+        console.log('Plan selected successfully:', { plan, assessmentId: assessment.id });
+        onSuccess(plan, assessment.id);
       }
-
-      const medicalConditions = Array.isArray(formData.selectedConditions) 
-        ? formData.selectedConditions 
-        : [];
-
-      const height = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches || '0');
-      const weight = parseInt(formData.weight);
-
-      const { data, error } = await supabase
-        .from('assessments')
-        .insert({
-          user_id: user.id,
-          medication: medication,
-          plan_type: selectedPlan,
-          amount: amount,
-          medical_conditions: medicalConditions,
-          patient_height: height || null,
-          patient_weight: weight || null,
-          status: 'draft'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
-      }
-
-      onSuccess(selectedPlan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
       toast({

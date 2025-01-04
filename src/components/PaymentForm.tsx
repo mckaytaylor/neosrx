@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentFormFields } from "./PaymentFormFields";
 import { validateCardNumber, validateExpirationDate, validateCardCode, getErrorMessage } from "@/utils/paymentValidation";
+import { useAssessmentManagement } from "@/hooks/useAssessmentManagement";
 
 interface PaymentFormProps {
   subscriptionId: string;
@@ -14,6 +15,7 @@ interface PaymentFormProps {
 export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentFormProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const { updateAssessmentStatus } = useAssessmentManagement();
   const [paymentData, setPaymentData] = useState({
     cardNumber: "",
     expirationDate: "",
@@ -152,15 +154,7 @@ export const PaymentForm = ({ subscriptionId, onSuccess, onCancel }: PaymentForm
       }
 
       // Update assessment status to completed after successful payment
-      const { error: updateError } = await supabase
-        .from('assessments')
-        .update({ status: 'completed' })
-        .eq('id', subscriptionId);
-
-      if (updateError) {
-        console.error('Error updating assessment status:', updateError);
-        throw new Error("Failed to update assessment status");
-      }
+      await updateAssessmentStatus(subscriptionId, 'completed');
 
       toast({
         title: "Payment Successful",
