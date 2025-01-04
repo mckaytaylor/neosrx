@@ -28,7 +28,9 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       return null;
     }
 
-    return amounts[medication][plan];
+    const calculatedAmount = amounts[medication][plan];
+    console.log('Calculated amount:', { medication, plan, amount: calculatedAmount });
+    return calculatedAmount;
   };
 
   const handlePlanSelect = async (plan: string) => {
@@ -55,8 +57,6 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         return;
       }
 
-      console.log('Calculated amount:', { medication, plan, amount });
-
       const medicalConditions = Array.isArray(formData.selectedConditions) 
         ? formData.selectedConditions 
         : [];
@@ -75,12 +75,14 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
       const assessmentData = {
         medication: medication,
         plan_type: plan,
-        amount: amount,
+        amount: amount, // This is now guaranteed to be a valid number
         medical_conditions: medicalConditions,
         patient_height: isNaN(height) ? null : height,
         patient_weight: isNaN(weight) ? null : weight,
         status: 'draft' as const
       };
+
+      console.log('Saving assessment with data:', assessmentData);
 
       let data;
       if (existingDraft) {
@@ -113,7 +115,7 @@ export const usePlanSelection = ({ formData, onSuccess }: PlanSelectionHandlerPr
         throw new Error("Failed to save assessment");
       }
 
-      console.log('Saved assessment:', data);
+      console.log('Assessment saved successfully:', data);
       onSuccess(plan, data.id);
     } catch (error: any) {
       console.error("Error selecting plan:", error);
