@@ -12,12 +12,14 @@ export const useDraftAssessment = (formData: any, setFormData: (data: any) => vo
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // Get the most recent draft assessment
         const { data: assessment, error } = await supabase
           .from('assessments')
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'draft')
           .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (error) {
