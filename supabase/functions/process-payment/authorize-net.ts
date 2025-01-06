@@ -4,7 +4,8 @@ export async function processAuthorizeNetPayment(
   paymentData: PaymentData,
   assessment: Assessment,
   authLoginId: string,
-  transactionKey: string
+  transactionKey: string,
+  customerProfile?: { firstName?: string | null; lastName?: string | null }
 ): Promise<AuthorizeNetResponse> {
   console.log('Processing payment with Authorize.net:', {
     assessmentId: assessment.id,
@@ -16,6 +17,10 @@ export async function processAuthorizeNetPayment(
   const expDate = paymentData.expirationDate.replace(/\D/g, '');
   const shortRefId = assessment.id.substring(0, 20);
   const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
+
+  // Use profile name if available, fallback to "Test Customer" if not
+  const firstName = customerProfile?.firstName || 'Test';
+  const lastName = customerProfile?.lastName || 'Customer';
 
   const paymentRequest = {
     createTransactionRequest: {
@@ -39,8 +44,8 @@ export async function processAuthorizeNetPayment(
           description: `${assessment.medication} - ${assessment.plan_type}`
         },
         billTo: {
-          firstName: "Test",
-          lastName: "Customer",
+          firstName: firstName,
+          lastName: lastName,
           address: assessment.shipping_address || "123 Test St",
           city: assessment.shipping_city || "Test City",
           state: assessment.shipping_state || "CA",

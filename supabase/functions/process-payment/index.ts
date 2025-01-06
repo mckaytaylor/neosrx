@@ -45,7 +45,7 @@ serve(async (req) => {
     // Get assessment details
     const { data: assessment, error: assessmentError } = await supabase
       .from('assessments')
-      .select('*')
+      .select('*, profiles!inner(*)')
       .eq('id', subscriptionId)
       .single()
 
@@ -60,7 +60,8 @@ serve(async (req) => {
       id: assessment.id, 
       amount: assessment.amount,
       medication: assessment.medication,
-      plan_type: assessment.plan_type
+      plan_type: assessment.plan_type,
+      customerName: `${assessment.profiles?.first_name || 'Unknown'} ${assessment.profiles?.last_name || 'Customer'}`
     })
 
     // Get Authorize.net credentials
@@ -74,12 +75,16 @@ serve(async (req) => {
 
     console.log('Starting payment processing with Authorize.net...');
 
-    // Process payment
+    // Process payment with customer profile
     const paymentResponse = await processAuthorizeNetPayment(
       paymentData as PaymentData,
       assessment as Assessment,
       authLoginId,
-      transactionKey
+      transactionKey,
+      {
+        firstName: assessment.profiles?.first_name,
+        lastName: assessment.profiles?.last_name
+      }
     )
 
     console.log('Authorize.net response received:', {
