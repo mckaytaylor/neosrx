@@ -36,6 +36,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase configuration');
       throw new Error('Server configuration error')
     }
 
@@ -67,8 +68,11 @@ serve(async (req) => {
     const transactionKey = Deno.env.get('AUTHORIZENET_TRANSACTION_KEY')
     
     if (!authLoginId || !transactionKey) {
+      console.error('Missing Authorize.net credentials');
       throw new Error('Payment processor configuration error')
     }
+
+    console.log('Starting payment processing with Authorize.net...');
 
     // Process payment
     const paymentResponse = await processAuthorizeNetPayment(
@@ -77,6 +81,12 @@ serve(async (req) => {
       authLoginId,
       transactionKey
     )
+
+    console.log('Authorize.net response received:', {
+      resultCode: paymentResponse.messages?.resultCode,
+      responseCode: paymentResponse.transactionResponse?.responseCode,
+      errors: paymentResponse.transactionResponse?.errors || paymentResponse.messages?.message
+    });
 
     // Validate payment response
     validatePaymentResponse(paymentResponse)
@@ -107,7 +117,11 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Payment processing error:', error.message)
+    console.error('Payment processing error details:', {
+      message: error.message,
+      stack: error.stack,
+      details: error.details || error.response || error
+    });
     
     return new Response(
       JSON.stringify({ 

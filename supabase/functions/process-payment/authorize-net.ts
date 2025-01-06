@@ -17,11 +17,6 @@ export async function processAuthorizeNetPayment(
   const shortRefId = assessment.id.substring(0, 20);
   const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
 
-  // Log test card usage but still process through sandbox
-  if (Deno.env.get('ENVIRONMENT') === 'development' && cardNumber === '4111111111111111') {
-    console.log('Using test card in development - processing through Authorize.net sandbox');
-  }
-
   const paymentRequest = {
     createTransactionRequest: {
       merchantAuthentication: {
@@ -56,9 +51,9 @@ export async function processAuthorizeNetPayment(
     }
   };
 
-  console.log('Sending payment request to Authorize.net');
+  console.log('Sending payment request to Authorize.net production API');
   
-  const response = await fetch('https://apitest.authorize.net/xml/v1/request.api', {
+  const response = await fetch('https://api.authorize.net/xml/v1/request.api', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -71,7 +66,8 @@ export async function processAuthorizeNetPayment(
   console.log('Payment response received:', {
     resultCode: paymentResponse.messages?.resultCode,
     responseCode: paymentResponse.transactionResponse?.responseCode,
-    errors: paymentResponse.transactionResponse?.errors || paymentResponse.messages?.message
+    errors: paymentResponse.transactionResponse?.errors || paymentResponse.messages?.message,
+    rawResponse: paymentResponse // Log full response for debugging
   });
 
   return paymentResponse;
@@ -87,7 +83,11 @@ export function validatePaymentResponse(response: AuthorizeNetResponse): void {
     const errorMessage = response.messages?.message?.[0]?.text || 
                         response.transactionResponse?.errors?.[0]?.errorText ||
                         'Payment processing failed';
-    console.error('Payment error details:', errorMessage);
+    console.error('Payment error details:', {
+      resultCode: response.messages.resultCode,
+      message: errorMessage,
+      fullResponse: response
+    });
     throw new Error(errorMessage);
   }
 
@@ -96,7 +96,11 @@ export function validatePaymentResponse(response: AuthorizeNetResponse): void {
     const errorMessage = response.transactionResponse?.messages?.[0]?.description || 
                         response.transactionResponse?.errors?.[0]?.errorText ||
                         'Transaction was not approved';
-    console.error(`Payment failed: ${errorMessage}`);
+    console.error('Transaction not approved:', {
+      responseCode: response.transactionResponse?.responseCode,
+      message: errorMessage,
+      fullResponse: response
+    });
     throw new Error(errorMessage);
   }
 }
