@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 
 interface HeroProps {
@@ -8,12 +9,23 @@ interface HeroProps {
 export const Hero = ({ onStart, onLogin }: HeroProps) => {
   return (
     <div className="text-center space-y-8 py-20">
-      <div className="mb-8">
-        <img 
-          src="/lovable-uploads/88e41391-4d43-49a3-8e4d-40cccf542699.png" 
-          alt="NEOS RX Medical Weight Loss Logo" 
-          className="h-16 mx-auto mb-12"
-        />
+      <div className="mb-8 flex flex-col items-center">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <img 
+            src="/lovable-uploads/af9d9a2d-f94d-492e-9b15-a1fb438fa7fa.png" 
+            alt="NeosRx WELLBOUND Medical Weight Loss Logo" 
+            className="h-16"
+          />
+          <div className="h-10 w-px bg-gray-300 mx-2"></div>
+          <img 
+            src="/lovable-uploads/7c29b8ad-f3ec-4941-975c-703fc2d9a888.png" 
+            alt="BelleHealth Logo" 
+            className="h-10"
+          />
+        </div>
+        <p className="text-sm text-gray-500 font-medium">
+          A Collaborative Weight Management Program
+        </p>
       </div>
       <h1 className="text-4xl md:text-5xl font-bold text-secondary">
         GLP-1 Medication Assessment
