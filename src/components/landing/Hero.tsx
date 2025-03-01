@@ -24,7 +24,7 @@ export const Hero = ({ onStart, onLogin }: HeroProps) => {
           />
         </div>
         <p className="text-sm text-gray-500 font-medium">
-          A Collaborative Weight Management Program
+          Bringing you the best care in all 50 states
         </p>
       </div>
       <h1 className="text-4xl md:text-5xl font-bold text-secondary">
